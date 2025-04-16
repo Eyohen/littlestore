@@ -13,6 +13,10 @@ import NotFoundPage from './pages/NotFoundPage';
 import { CartProvider } from './context/CartContext';
 import TestCoinley from './pages/TestCoinley';
 import QuickDemo from './QuickDemo';
+import TestQRCode from './pages/TestQRCode';
+import StandaloneTest from './pages/StandaloneTest';
+
+
 
 function App() {
   return (
@@ -20,6 +24,8 @@ function App() {
           <Navbar />
           <main className="flex-grow">
             <Routes>
+            <Route path="/standalone" element={<StandaloneTest />} />
+            <Route path="/testqrcode" element={<TestQRCode />} />
             <Route path="/quickdemo" element={<QuickDemo />} />
               <Route path="/" element={<HomePage />} />
               <Route path="/test-coinley" element={<TestCoinley />} />
