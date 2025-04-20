@@ -73,7 +73,7 @@ const Login = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* Logo placeholder */}
-        <div className="mx-auto w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
+        <div className="mx-auto w-12 h-12 bg-[#7042D2] rounded-lg flex items-center justify-center">
           <span className="text-white text-xl font-bold">S</span>
         </div>
 
@@ -190,7 +190,7 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-500 hover:bg-[#4F7942] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#7042D2] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
                   isLoading ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >

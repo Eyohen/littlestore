@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "axios": "^1.7.7",
-    "coinley-checkout": "^0.2.7",
+    "coinley-checkout": "^0.2.8",
     "coinley-sdk": "^0.1.8",
     "dotenv": "^16.4.5",
     "framer-motion": "^11.11.8",

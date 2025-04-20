@@ -1,7 +1,11 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { FiShoppingCart } from "react-icons/fi";
+import { HiArrowNarrowLeft } from "react-icons/hi";
+
 
 function CartPage() {
+  const navigate = useNavigate();
   const { cartItems, removeFromCart, updateQuantity, subtotal } = useCart();
 
   // Calculate shipping cost (free shipping over $50)
@@ -15,32 +19,39 @@ function CartPage() {
   const total = subtotal + shippingCost + tax;
 
   return (
-    <div className="container-custom py-8">
+    <div className="container-custom py-8 px-4 md:px-16">
       <h1 className="text-3xl font-bold mb-8 text-center">Your Shopping Cart</h1>
       
       {cartItems.length === 0 ? (
         <div className="text-center py-12">
-          <div className="mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
+          <div className='container w-16 mx-auto'>
+          <div className="mb-4 bg-gray-200 py-2 w-[80px] h-[80px] flex justify-center items-center rounded-full">
+          <FiShoppingCart size={25}/>
           </div>
-          <p className="text-lg text-gray-600 mb-6">Your cart is empty</p>
-          <Link to="/products" className="btn btn-primary">
+          </div>
+          <p className="text-2xl font-bold mb-6">Your cart is empty</p>
+          <p className='text-gray-500 text-lg '>Looks like you haven't added any items to your cart yet</p>
+
+
+          <Link to="/products" >
+          <button 
+          onClick={()=> navigate('/products')}
+          className="bg-[#7042D2] text-white px-9 py-2 rounded-3xl mt-6">
             Continue Shopping
+            </button>
           </Link>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <ul className="divide-y divide-gray-200">
+            <div className="rounded-xl">
+              <ul className="space-y-4">
                 {cartItems.map((item) => (
-                  <li key={item.id} className="p-4">
+                  <li key={item.id} className="p-6 bg-white rounded-2xl shadow-2xl">
                     <div className="flex items-center">
                       {/* Product Image */}
-                      <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-md overflow-hidden">
+                      <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-xl overflow-hidden">
                         <img 
                           src={item.imageUrl}
                           alt={item.name}
@@ -55,11 +66,11 @@ function CartPage() {
                             {item.name}
                           </Link>
                         </h3>
-                        <p className="mt-1 text-sm text-gray-500">${Number (item?.price)?.toFixed(2)} / {item.unit}</p>
+                        <p className="mt-1 text-lg font-bold">${Number (item?.price)?.toFixed(2)}</p>
                       </div>
                       
                       {/* Quantity Controls */}
-                      <div className="flex items-center ml-4">
+                      <div className="flex items-center ml-4 border px-3 rounded-2xl py-1">
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
                           className="text-gray-500 focus:outline-none"
@@ -108,8 +119,8 @@ function CartPage() {
           
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-md p-6 sticky top-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Order Summary</h2>
+            <div className="bg-white rounded-lg shadow-md p-6 sticky top-6 w-[350px]">
+              <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
               
               <div className="space-y-4">
                 <div className="flex justify-between">
@@ -139,19 +150,29 @@ function CartPage() {
               </div>
               
               <div className="mt-6">
+                <div className='flex flex-col gap-y-4'>
                 <Link
-                  to="/checkout"
-                  className="w-full btn btn-primary flex items-center justify-center"
+                  to="/checkout">
+                    <button
+                  className="px-12 rounded-3xl py-2 bg-[#7042D2] text-white w-full"
                 >
                   Proceed to Checkout
+                  </button>
                 </Link>
                 
                 <Link
-                  to="/products"
-                  className="w-full mt-4 btn bg-gray-200 text-gray-800 hover:bg-gray-300 flex items-center justify-center"
+                  to="/products">
+                                 <button
+                  className="px-12 rounded-3xl py-2 flex items-center gap-x-2 w-full font-semibold"
                 >
+                 < HiArrowNarrowLeft/>
                   Continue Shopping
+                  </button>
                 </Link>
+                  </div>
+
+
+
               </div>
             </div>
           </div>

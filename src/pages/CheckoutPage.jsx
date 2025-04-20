@@ -190,7 +190,7 @@
 //                                         value={customerInfo.firstName}
 //                                         onChange={handleInputChange}
 //                                         required
-//                                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+//                                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
 //                                     />
 //                                 </div>
 
@@ -205,7 +205,7 @@
 //                                         value={customerInfo.lastName}
 //                                         onChange={handleInputChange}
 //                                         required
-//                                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+//                                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
 //                                     />
 //                                 </div>
 
@@ -220,7 +220,7 @@
 //                                         value={customerInfo.email}
 //                                         onChange={handleInputChange}
 //                                         required
-//                                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+//                                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
 //                                     />
 //                                 </div>
 
@@ -235,7 +235,7 @@
 //                                         value={customerInfo.address}
 //                                         onChange={handleInputChange}
 //                                         required
-//                                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+//                                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
 //                                     />
 //                                 </div>
 
@@ -250,7 +250,7 @@
 //                                         value={customerInfo.city}
 //                                         onChange={handleInputChange}
 //                                         required
-//                                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+//                                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
 //                                     />
 //                                 </div>
 
@@ -265,7 +265,7 @@
 //                                         value={customerInfo.state}
 //                                         onChange={handleInputChange}
 //                                         required
-//                                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+//                                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
 //                                     />
 //                                 </div>
 
@@ -280,7 +280,7 @@
 //                                         value={customerInfo.zipCode}
 //                                         onChange={handleInputChange}
 //                                         required
-//                                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+//                                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
 //                                     />
 //                                 </div>
 
@@ -294,7 +294,7 @@
 //                                         value={customerInfo.country}
 //                                         onChange={handleInputChange}
 //                                         required
-//                                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+//                                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
 //                                     >
 //                                         <option value="US">United States</option>
 //                                         <option value="CA">Canada</option>
@@ -314,7 +314,7 @@
 //                                         value={customerInfo.phone}
 //                                         onChange={handleInputChange}
 //                                         required
-//                                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+//                                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
 //                                     />
 //                                 </div>
 //                             </div>
@@ -332,7 +332,7 @@
 //                                         type="radio"
 //                                         checked={paymentMethod === 'coinley'}
 //                                         onChange={() => setPaymentMethod('coinley')}
-//                                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+//                                         className="h-4 w-4 text-blue-600 focus:ring-[#7042D2] border-gray-300"
 //                                     />
 //                                     <label htmlFor="coinley" className="ml-3 block text-sm font-medium text-gray-700">
 //                                         Pay with Cryptocurrency
@@ -359,7 +359,7 @@
 
 //                             <button
 //                                 type="submit"
-//                                 className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+//                                 className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7042D2]"
 //                                 disabled={processing}
 //                             >
 //                                 {processing ? (
@@ -689,7 +689,7 @@ function CheckoutPage() {
                                         value={customerInfo.firstName}
                                         onChange={handleInputChange}
                                         required
-                                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
                                     />
                                 </div>
 
@@ -705,7 +705,7 @@ function CheckoutPage() {
                                        value={customerInfo.lastName}
                                        onChange={handleInputChange}
                                        required
-                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
                                    />
                                </div>
 
@@ -720,7 +720,7 @@ function CheckoutPage() {
                                        value={customerInfo.email}
                                        onChange={handleInputChange}
                                        required
-                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
                                    />
                                </div>
 
@@ -735,7 +735,7 @@ function CheckoutPage() {
                                        value={customerInfo.address}
                                        onChange={handleInputChange}
                                        required
-                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
                                    />
                                </div>
 
@@ -750,7 +750,7 @@ function CheckoutPage() {
                                        value={customerInfo.city}
                                        onChange={handleInputChange}
                                        required
-                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
                                    />
                                </div>
 
@@ -765,7 +765,7 @@ function CheckoutPage() {
                                        value={customerInfo.state}
                                        onChange={handleInputChange}
                                        required
-                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
                                    />
                                </div>
 
@@ -780,7 +780,7 @@ function CheckoutPage() {
                                        value={customerInfo.zipCode}
                                        onChange={handleInputChange}
                                        required
-                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
                                    />
                                </div>
 
@@ -794,7 +794,7 @@ function CheckoutPage() {
                                        value={customerInfo.country}
                                        onChange={handleInputChange}
                                        required
-                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
                                    >
                                        <option value="US">United States</option>
                                        <option value="CA">Canada</option>
@@ -814,7 +814,7 @@ function CheckoutPage() {
                                        value={customerInfo.phone}
                                        onChange={handleInputChange}
                                        required
-                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
                                      />
                                 </div>
                                 
@@ -833,7 +833,7 @@ function CheckoutPage() {
                                         type="radio"
                                         checked={paymentMethod === 'coinley'}
                                         onChange={() => setPaymentMethod('coinley')}
-                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                        className="h-4 w-4 text-blue-600 focus:ring-[#7042D2] border-gray-300"
                                     />
                                     <label htmlFor="coinley" className="ml-3 block text-sm font-medium text-gray-700">
                                         Pay with Cryptocurrency
@@ -860,7 +860,7 @@ function CheckoutPage() {
 
                             <button
                                 type="submit"
-                                className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                className="w-full py-2 px-4 bg-[#7042D2] hover:bg-[#7042D2] text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7042D2]"
                                 disabled={processing}
                             >
                                 {processing ? (

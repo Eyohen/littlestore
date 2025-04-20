@@ -85,7 +85,7 @@ function ProductDetailPage() {
   }
 
   return (
-    <div className="container-custom py-8 px-9">
+    <div className="container-custom py-8 px-9 md:px-24">
       <div className="mb-4">
         <Link to="/products" className="text-primary hover:underline flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -95,7 +95,7 @@ function ProductDetailPage() {
         </Link>
       </div>
       
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="bg-white rounded-lg shadow-md overflow-hidden md:px-24">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6">
           {/* Product Image */}
           <div className="aspect-w-4 aspect-h-3 md:aspect-w-3 md:aspect-h-4">
@@ -108,7 +108,7 @@ function ProductDetailPage() {
           
           {/* Product Details */}
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2 font-bricolage">{product.name}</h1>
             
             <div className="flex items-center mb-4">
               <span className="text-2xl font-bold text-gray-900">${Number (product?.price)?.toFixed(2)}</span>
@@ -169,7 +169,7 @@ function ProductDetailPage() {
               
               <button 
                 onClick={handleAddToCart}
-                className="btn bg-green-500 py-2 text-white flex-1"
+                className="bg-[#7042D2] py-2 text-white rounded-2xl font-bricolage px-16"
               >
                 Add to Cart
               </button>

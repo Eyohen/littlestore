@@ -2,6 +2,11 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import coinleystore from '../assets/coinley-store.svg';
+import { GoPerson } from "react-icons/go";
+import { FiShoppingCart } from "react-icons/fi";
+
+
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,7 +22,7 @@ function Navbar() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <span className="text-primary text-2xl font-bold">FreshBites</span>
+            <span className="text-primary text-2xl font-bold"><img src={coinleystore} className='w-48'/></span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -28,19 +33,21 @@ function Navbar() {
             <Link to="/products" className="text-gray-700 hover:text-primary font-medium">
               Products
             </Link>
-            <Link to="/login" className="text-white hover:text-primary font-medium bg-green-500 px-9">
+            <Link to="/login" className="text-white hover:text-primary font-medium bg-[#7042D2] px-9 rounded-lg">
               Login
             </Link>
           </div>
 
           {/* Cart Icon */}
           <div className="flex items-center space-x-4">
+          <Link to="/" className="relative">
+               <GoPerson size={25}/>
+            
+            </Link>
             <Link to="/cart" className="relative">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
+            <FiShoppingCart size={25}/>
               {cartItemCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-primary text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 bg-[#7042D2] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                   {cartItemCount}
                 </span>
               )}
@@ -76,6 +83,15 @@ function Navbar() {
               onClick={() => setIsMenuOpen(false)}
             >
               Products
+            </Link>
+
+            <Link to="/cart" className="relative">
+            <FiShoppingCart size={25}/>
+              {cartItemCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#7042D2] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {cartItemCount}
+                </span>
+              )}
             </Link>
           </div>
         )}

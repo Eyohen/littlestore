@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import axios from 'axios';
 import { URL } from '../url';
+import { HiArrowNarrowRight } from "react-icons/hi";
 
 
 function HomePage() {
@@ -33,7 +34,8 @@ function HomePage() {
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative h-96 bg-green-100 px-9">
+      <section className="relative h-96 px-9 md:px-64 pt-9">
+        <div className='px-6 md:px-24 bg-[#7042D2] rounded-3xl py-24'>
         <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary-dark/80"></div>
         <div className="container-custom relative h-full flex flex-col justify-center">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
@@ -42,16 +44,17 @@ function HomePage() {
           <p className="text-xl text-white mb-8 max-w-2xl">
             Farm-fresh produce delivered to your doorstep. Healthy eating made easy.
           </p>
-          <Link to="/products" className="btn bg-white text-primary hover:bg-gray-100 inline-block w-max">
-            Shop Now
+          <Link to="/products" className="btn bg-white text-primary hover:bg-gray-100 w-max text-[#7042D2] flex gap-x-2 items-center rounded-2xl py-2 px-6">
+            Explore Products <HiArrowNarrowRight/>
           </Link>
+        </div>
         </div>
       </section>
 
       {/* Featured Products */}
-      <section className="py-12 px-9">
+      <section className="py-28 md:py-24 px-9 md:px-64">
         <div className="container-custom">
-          <h2 className="text-3xl font-bold text-center mb-8">Featured Products</h2>
+          <h2 className="text-3xl font-bricolage font-bold text-gray-900 text-center mb-8">Featured Products</h2>
           
           {loading ? (
             <div className="flex justify-center">
@@ -60,7 +63,7 @@ function HomePage() {
           ) : error ? (
             <div className="text-center text-red-500">{error}</div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
               {featuredProducts?.map(product => (
                 <ProductCard key={product.id} product={product} />
               ))}

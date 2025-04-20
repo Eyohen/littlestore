@@ -48,39 +48,48 @@ function ProductsPage() {
 
   return (
     <div className="container-custom py-8 px-9">
-      <h1 className="text-3xl font-bold mb-8 text-center">Our Products</h1>
+      <h1 className="text-3xl font-bold mb-8 text-center font-bricolage">Our Products</h1>
+
+      <div className='grid grid-cols-2 px-4 md:px-64'>
       
       {/* Search and Filter */}
-      <div className="mb-8 flex flex-col md:flex-row gap-4">
-        <div className="flex-1">
+      <div className="mb-8 flex flex-col gap-4">
+        <div className="">
           <input
             type="text"
             placeholder="Search products..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-[500px] px-4 py-2 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
         
-        <div className="flex gap-2">
-          <button
+        <div className="flex flex-col gap-y-4 justify-start">
+
+        <h1 className="text-xl font-bold mb-8 font-bricolage">Categories</h1>
+
+          <div
             onClick={() => setFilter('all')}
-            className={`btn ${filter === 'all' ? 'btn-primary' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+            className={`btn ${filter === 'all' ? 'bg-[#7042D2] text-white hover:bg-[#7042D2] hover:text-white rounded-3xl py-2 w-[200px] px-4' : 'bg-gray-200 text-gray-800 hover:bg-[#7042D2]'}`}
           >
             All
-          </button>
-          <button
+          </div>
+
+          <div
             onClick={() => setFilter('fruits')}
-            className={`btn ${filter === 'fruits' ? 'btn-primary' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+            className={`btn ${filter === 'all' ? 'hover:bg-[#7042D2] hover:text-white rounded-3xl py-2 w-[200px] px-4' : 'bg-gray-200 text-gray-800 hover:bg-[#7042D2]'}`}
           >
             Fruits
-          </button>
-          <button
-            onClick={() => setFilter('vegetables')}
-            className={`btn ${filter === 'vegetables' ? 'btn-primary' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+          </div>
+
+          <div
+            onClick={() => setFilter('all')}
+            className={`btn ${filter === 'all' ? 'hover:bg-[#7042D2] hover:text-white rounded-3xl py-2 w-[200px] px-4' : 'bg-gray-200 text-gray-800 hover:bg-[#7042D2]'}`}
           >
             Vegetables
-          </button>
+          </div>
+
+  
         </div>
       </div>
       
@@ -96,12 +105,15 @@ function ProductsPage() {
           <p className="text-gray-500 text-lg">No products found matching your criteria.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-6">
           {filteredProducts.map(product => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
       )}
+
+
+</div>
     </div>
   );
 }
