@@ -85,14 +85,7 @@ function Navbar() {
               Products
             </Link>
 
-            <Link to="/cart" className="relative">
-            <FiShoppingCart size={25}/>
-              {cartItemCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-[#7042D2] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                  {cartItemCount}
-                </span>
-              )}
-            </Link>
+
           </div>
         )}
       </div>
