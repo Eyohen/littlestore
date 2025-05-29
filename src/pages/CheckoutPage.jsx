@@ -1512,8 +1512,10 @@ function CheckoutPage() {
             {/* FIXED: Enhanced Coinley Checkout Component */}
             <ThemeProvider initialTheme="light">
                 <CoinleyProvider
-                    apiKey="fdb87b029d8fb531589df71e17a8cc55"
-                    apiSecret="5fe381f54803f100312117028542e952bd5d3d1d8b8df2dd1d0761c030cda4bf"
+                    // apiKey="fdb87b029d8fb531589df71e17a8cc55"
+                    // apiSecret="5fe381f54803f100312117028542e952bd5d3d1d8b8df2dd1d0761c030cda4bf"
+                    apiKey="afb78ff958350b9067798dd077c28459"
+                    apiSecret="c22d3879eff18c2d3f8f8a61d4097c230a940356a3d139ffceee11ba65b1a34c"
                     apiUrl="https://coinleyserver-production.up.railway.app"
                     debug={process.env.NODE_ENV === 'development'}
                 >
