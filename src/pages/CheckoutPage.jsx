@@ -2231,11 +2231,18 @@ function CheckoutPage() {
                         merchantName="FreshBites"
                         merchantWalletAddresses={merchantWalletAddresses}
                         onSuccess={handlePaymentSuccess}
-                        onError={handlePaymentError}
+                        onError={(error) => {
+                            console.error('Detailed payment error:', error);
+                            console.log('Error details:', error);
+                            console.log('Current wallet addresses:', merchantWalletAddresses);
+                            console.log('Selected network:', selectedNetwork);
+                            console.log('Recipient address:', merchantWalletAddresses[selectedNetwork]);
+                            handlePaymentError(error);
+                        }}
                         onClose={handleCloseModal}
                         theme="light"
                         autoOpen={false}
-                        testMode={false}
+                        testMode={true} // Set to true for testing
                         supportedNetworks={[
                             SAFE_NETWORK_TYPES.ETHEREUM, 
                             SAFE_NETWORK_TYPES.BSC, 
@@ -2245,6 +2252,8 @@ function CheckoutPage() {
                         supportedCurrencies={availableCurrencies}
                         defaultCurrency={selectedCurrency}
                         defaultNetwork={selectedNetwork}
+                        // Add direct recipient address prop if supported by SDK
+                        recipientAddress={merchantWalletAddresses[selectedNetwork]}
                     />
                 </CoinleyProvider>
             </ThemeProvider>
