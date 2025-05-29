@@ -1548,6 +1548,7 @@
 
 
 
+
 // CheckoutPage.jsx - Improved Version
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -1564,6 +1565,7 @@ import {
   WALLET_TYPES,
   TOKEN_CONFIG
 } from 'coinley-checkout';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 function CheckoutPage() {
     const navigate = useNavigate();
@@ -1592,10 +1594,18 @@ function CheckoutPage() {
     
     // Select currency options
     const [selectedCurrency, setSelectedCurrency] = useState('USDT');
-    const [selectedNetwork, setSelectedNetwork] = useState(NETWORK_TYPES?.ETHEREUM || 'ethereum');
+    const [selectedNetwork, setSelectedNetwork] = useState('ethereum');
     
     // Available currencies
     const availableCurrencies = ['USDT', 'USDC', 'ETH', 'BNB', 'TRX', 'ALGO'];
+    
+    // Network to currency mapping for recommended networks
+    const networkCurrencyMap = {
+        'ethereum': ['USDT', 'USDC', 'ETH'],
+        'bsc': ['USDT', 'USDC', 'BNB'],
+        'tron': ['USDT', 'USDC', 'TRX'],
+        'algorand': ['USDT', 'USDC', 'ALGO']
+    };
     
     // Calculate order totals
     const shippingCost = subtotal > 50 ? 0 : 0.001;
@@ -1628,26 +1638,67 @@ function CheckoutPage() {
         [SAFE_NETWORK_TYPES.ALGORAND]: ['USDT', 'USDC', 'ALGO']
     };
     
+    // Create a patched SDK to fix the recipient address issue
+    const patchCoinleySDK = useCallback(() => {
+        try {
+            // Check if we can access the window object
+            if (typeof window !== 'undefined' && window.document) {
+                // Wait a short time for SDK to load
+                setTimeout(() => {
+                    // Find the original send transaction function and patch it
+                    const originalSendTx = window._coinleySDK?.sendTransaction;
+                    if (originalSendTx && !window._coinleySDKPatched) {
+                        console.log('Patching Coinley SDK transaction function...');
+                        
+                        // Store the original function and create a patched version
+                        window._originalSendTx = originalSendTx;
+                        window._coinleySDKPatched = true;
+                        
+                        // Override the function to ensure recipient address is provided
+                        window._coinleySDK.sendTransaction = (params) => {
+                            console.log('Patched sendTransaction called with params:', params);
+                            
+                            // Get the current network from the SDK state or use our selected network
+                            const currentNetwork = window._coinleySDK?.state?.selectedPaymentMethod?.network || selectedNetwork;
+                            
+                            // Fix missing recipient address
+                            if (!params.toAddress || params.toAddress === 'undefined') {
+                                console.log(`Fixing missing recipient address for network: ${currentNetwork}`);
+                                params.toAddress = RECIPIENT_ADDRESSES[currentNetwork];
+                                console.log('New params with fixed address:', params);
+                            }
+                            
+                            // Call the original function with fixed parameters
+                            return window._originalSendTx(params);
+                        };
+                        
+                        console.log('Coinley SDK successfully patched');
+                    }
+                }, 500);
+            }
+        } catch (error) {
+            console.error('Error patching Coinley SDK:', error);
+        }
+    }, [selectedNetwork]);
+    
     // Debug: Check SDK imports on component mount
     useEffect(() => {
         console.log('SDK Import Check:', {
             NETWORK_TYPES,
             WALLET_TYPES,
             TOKEN_CONFIG,
-            merchantWalletAddresses
+            RECIPIENT_ADDRESSES
         });
         
-        // Verify wallet addresses are properly set
-        for (const network in merchantWalletAddresses) {
-            if (!merchantWalletAddresses[network] || 
-                merchantWalletAddresses[network] === 'YourAlgorandWalletAddressHere') {
-                console.warn(`Invalid or missing wallet address for network: ${network}`);
-            }
-        }
+        // Apply SDK patch
+        patchCoinleySDK();
         
-        // Update selected network based on currency if needed
-        updateNetworkForCurrency(selectedCurrency);
-    }, []);
+        // Expose important objects for debugging
+        if (typeof window !== 'undefined') {
+            window._RECIPIENT_ADDRESSES = RECIPIENT_ADDRESSES;
+            window._networkCurrencyMap = networkCurrencyMap;
+        }
+    }, [patchCoinleySDK]);
     
     // Update network when currency changes
     const updateNetworkForCurrency = (currency) => {
@@ -2242,7 +2293,7 @@ function CheckoutPage() {
                         onClose={handleCloseModal}
                         theme="light"
                         autoOpen={false}
-                        testMode={false} // Set to true for testing
+                        testMode={false} // Set to false for real transactions
                         supportedNetworks={[
                             SAFE_NETWORK_TYPES.ETHEREUM, 
                             SAFE_NETWORK_TYPES.BSC, 
