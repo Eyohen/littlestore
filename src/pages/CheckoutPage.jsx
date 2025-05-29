@@ -2242,7 +2242,7 @@ function CheckoutPage() {
                         onClose={handleCloseModal}
                         theme="light"
                         autoOpen={false}
-                        testMode={true} // Set to true for testing
+                        testMode={false} // Set to true for testing
                         supportedNetworks={[
                             SAFE_NETWORK_TYPES.ETHEREUM, 
                             SAFE_NETWORK_TYPES.BSC, 
