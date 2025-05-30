@@ -1550,7 +1550,7 @@
 
 
 // CheckoutPage.jsx - Improved Version
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import axios from 'axios';
@@ -1565,12 +1565,35 @@ import {
   WALLET_TYPES,
   TOKEN_CONFIG
 } from 'coinley-checkout';
-import { useState, useEffect, useRef, useCallback } from 'react';
 
 function CheckoutPage() {
     const navigate = useNavigate();
     const { cartItems, subtotal, clearCart } = useCart();
     const coinleyCheckoutRef = useRef(null);
+    
+    // Define networks in plain strings to avoid reference issues
+    const NETWORKS = {
+        ETHEREUM: 'ethereum',
+        BSC: 'bsc',
+        TRON: 'tron',
+        ALGORAND: 'algorand'
+    };
+
+    // Create direct recipient address mapping using plain strings
+    const RECIPIENT_ADDRESSES = {
+        'ethereum': '0x581c333Ca62d04bADb563750535C935516b90839',
+        'bsc': '0x581c333Ca62d04bADb563750535C935516b90839',
+        'tron': 'TV3d7eKYnaV4NVbwrqEPoyib9yXbZUYEBJ',
+        'algorand': 'LVUECLJSQODSDJNYRXVKLHKMN7XA2M3PGPKYNACDRGSKCQISFN6IXTVPOA'
+    };
+
+    // Network to currency mapping for recommended networks
+    const networkCurrencyMap = {
+        'ethereum': ['USDT', 'USDC', 'ETH'],
+        'bsc': ['USDT', 'USDC', 'BNB'],
+        'tron': ['USDT', 'USDC', 'TRX'],
+        'algorand': ['USDT', 'USDC', 'ALGO']
+    };
     
     // Customer information state
     const [customerInfo, setCustomerInfo] = useState({
@@ -1599,44 +1622,11 @@ function CheckoutPage() {
     // Available currencies
     const availableCurrencies = ['USDT', 'USDC', 'ETH', 'BNB', 'TRX', 'ALGO'];
     
-    // Network to currency mapping for recommended networks
-    const networkCurrencyMap = {
-        'ethereum': ['USDT', 'USDC', 'ETH'],
-        'bsc': ['USDT', 'USDC', 'BNB'],
-        'tron': ['USDT', 'USDC', 'TRX'],
-        'algorand': ['USDT', 'USDC', 'ALGO']
-    };
-    
     // Calculate order totals
     const shippingCost = subtotal > 50 ? 0 : 0.001;
     const taxRate = 0.001;
     const tax = subtotal * taxRate;
     const total = subtotal + shippingCost + tax;
-    
-    // Define network constants locally if import fails (fallback safety)
-    const SAFE_NETWORK_TYPES = NETWORK_TYPES || {
-        ETHEREUM: 'ethereum',
-        BSC: 'bsc',
-        TRON: 'tron',
-        ALGORAND: 'algorand'
-    };
-
-    // Merchant wallet addresses - ensure these are valid addresses for each network
-    const merchantWalletAddresses = {
-        [SAFE_NETWORK_TYPES.ETHEREUM]: "0x581c333Ca62d04bADb563750535C935516b90839",
-        [SAFE_NETWORK_TYPES.BSC]: "0x581c333Ca62d04bADb563750535C935516b90839",
-        [SAFE_NETWORK_TYPES.TRON]: "TV3d7eKYnaV4NVbwrqEPoyib9yXbZUYEBJ",
-        // Use a real Algorand address instead of placeholder
-        [SAFE_NETWORK_TYPES.ALGORAND]: "LVUECLJSQODSDJNYRXVKLHKMN7XA2M3PGPKYNACDRGSKCQISFN6IXTVPOA"
-    };
-    
-    // Network to currency mapping for recommended networks
-    const networkCurrencyMap = {
-        [SAFE_NETWORK_TYPES.ETHEREUM]: ['USDT', 'USDC', 'ETH'],
-        [SAFE_NETWORK_TYPES.BSC]: ['USDT', 'USDC', 'BNB'],
-        [SAFE_NETWORK_TYPES.TRON]: ['USDT', 'USDC', 'TRX'],
-        [SAFE_NETWORK_TYPES.ALGORAND]: ['USDT', 'USDC', 'ALGO']
-    };
     
     // Create a patched SDK to fix the recipient address issue
     const patchCoinleySDK = useCallback(() => {
@@ -1679,7 +1669,7 @@ function CheckoutPage() {
         } catch (error) {
             console.error('Error patching Coinley SDK:', error);
         }
-    }, [selectedNetwork]);
+    }, [selectedNetwork, RECIPIENT_ADDRESSES]);
     
     // Debug: Check SDK imports on component mount
     useEffect(() => {
@@ -1698,7 +1688,7 @@ function CheckoutPage() {
             window._RECIPIENT_ADDRESSES = RECIPIENT_ADDRESSES;
             window._networkCurrencyMap = networkCurrencyMap;
         }
-    }, [patchCoinleySDK]);
+    }, [patchCoinleySDK, RECIPIENT_ADDRESSES, networkCurrencyMap]);
     
     // Update network when currency changes
     const updateNetworkForCurrency = (currency) => {
@@ -1755,7 +1745,7 @@ function CheckoutPage() {
             }
             
             // Verify we have wallet addresses
-            if (!merchantWalletAddresses[selectedNetwork]) {
+            if (!RECIPIENT_ADDRESSES[selectedNetwork]) {
                 throw new Error(`No wallet address configured for the selected network: ${selectedNetwork}`);
             }
             
@@ -1800,40 +1790,85 @@ function CheckoutPage() {
     // Initialize payment with Coinley
     const initiatePayment = (orderId) => {
         if (coinleyCheckoutRef.current) {
+            // Get recipient address for selected network - use direct string
+            const recipientAddress = RECIPIENT_ADDRESSES[selectedNetwork];
+            
             console.log('Initiating payment with:', {
                 network: selectedNetwork,
                 currency: selectedCurrency,
                 amount: total,
-                merchantWalletAddresses,
-                walletAddress: merchantWalletAddresses[selectedNetwork]
+                recipientAddress
             });
             
-            if (!merchantWalletAddresses[selectedNetwork]) {
+            // Validate recipient address
+            if (!recipientAddress) {
                 setError(`No wallet address configured for ${selectedNetwork}. Please contact support.`);
                 setProcessing(false);
                 return;
             }
             
+            // Make sure our SDK patch is applied
+            if (typeof window !== 'undefined' && !window._coinleySDKPatched) {
+                patchCoinleySDK();
+            }
+            
+            // Create direct merchant wallet addresses object with network strings as keys
+            const directMerchantWallets = {};
+            Object.keys(RECIPIENT_ADDRESSES).forEach(network => {
+                directMerchantWallets[network] = RECIPIENT_ADDRESSES[network];
+            });
+            
+            // Make a flat version to ensure compatibility
+            const flatMerchantWallets = {
+                ethereum: RECIPIENT_ADDRESSES.ethereum,
+                bsc: RECIPIENT_ADDRESSES.bsc,
+                tron: RECIPIENT_ADDRESSES.tron,
+                algorand: RECIPIENT_ADDRESSES.algorand
+            };
+            
+            // Create payment configuration object
+            const paymentConfig = {
+                amount: total,
+                currency: selectedCurrency,
+                customerEmail: customerInfo.email,
+                callbackUrl: `${window.location.origin}/api/webhooks/payments/coinley`,
+                // Define recipient address in multiple ways to ensure it's found
+                merchantWalletAddresses: flatMerchantWallets,
+                recipientAddress: recipientAddress,
+                toAddress: recipientAddress,
+                recipientWallet: recipientAddress,
+                address: recipientAddress,
+                preferredNetwork: selectedNetwork,
+                network: selectedNetwork,
+                debug: true,
+                testMode: false, // Ensure real transactions
+                metadata: {
+                    orderId: orderId,
+                    customerName: `${customerInfo.firstName} ${customerInfo.lastName}`,
+                    recipientAddress: recipientAddress,
+                    network: selectedNetwork,
+                    // Add networks mapping for SDK internal use
+                    networks: flatMerchantWallets
+                }
+            };
+            
+            // Expose for debugging
+            if (typeof window !== 'undefined') {
+                window._lastPaymentConfig = paymentConfig;
+            }
+            
+            // Log the complete payment configuration
+            console.log('Payment configuration:', paymentConfig);
+            
             try {
-                coinleyCheckoutRef.current.open({
-                    amount: total,
-                    currency: selectedCurrency,
-                    customerEmail: customerInfo.email,
-                    callbackUrl: `${window.location.origin}/api/webhooks/payments/coinley`,
-                    merchantWalletAddresses: merchantWalletAddresses,
-                    preferredNetwork: selectedNetwork,
-                    debug: true, // Enable debugging for troubleshooting
-                    metadata: {
-                        orderId: orderId,
-                        customerName: `${customerInfo.firstName} ${customerInfo.lastName}`,
-                        items: cartItems.map(item => ({
-                            id: item.id,
-                            name: item.name,
-                            quantity: item.quantity,
-                            price: item.price
-                        }))
-                    }
-                });
+                // Open the payment modal with explicit configuration
+                coinleyCheckoutRef.current.open(paymentConfig);
+                
+                // Store important data in window for SDK patch to access
+                if (typeof window !== 'undefined') {
+                    window._currentPaymentNetwork = selectedNetwork;
+                    window._currentRecipientAddress = recipientAddress;
+                }
             } catch (error) {
                 console.error("Error opening Coinley checkout:", error);
                 setError(`Payment initialization failed: ${error.message}`);
@@ -1904,9 +1939,20 @@ function CheckoutPage() {
         const errorMessage = error.message || 'Unknown error';
         console.log('Error details:', error);
         
+        // Log the current wallet configuration for debugging
+        console.log('Error debugging info:', {
+            selectedNetwork,
+            selectedCurrency,
+            walletAddresses: RECIPIENT_ADDRESSES,
+            specificAddress: RECIPIENT_ADDRESSES[selectedNetwork]
+        });
+        
         // Show specific error message based on error type
         if (errorMessage.includes('Recipient address not provided')) {
-            setError(`Payment failed: Merchant wallet address is not configured correctly for the selected network (${selectedNetwork}). Please try a different network or contact support.`);
+            setError(`Payment failed: Recipient address issue. Please contact support with this info:
+            Network: ${selectedNetwork}
+            Address: ${RECIPIENT_ADDRESSES[selectedNetwork] || 'Not found'}
+            `);
         } else if (errorMessage.includes('User rejected')) {
             setError('Payment was rejected. You can try again when ready.');
         } else if (errorMessage.includes('insufficient funds')) {
@@ -2130,8 +2176,8 @@ function CheckoutPage() {
                                                 Preferred Network
                                             </label>
                                             <div className="flex flex-wrap gap-2">
-                                                {Object.keys(SAFE_NETWORK_TYPES).map(networkKey => {
-                                                    const network = SAFE_NETWORK_TYPES[networkKey];
+                                                {Object.keys(NETWORKS).map(networkKey => {
+                                                    const network = NETWORKS[networkKey].toLowerCase();
                                                     // Only show networks that support the selected currency
                                                     if (!networkCurrencyMap[network]?.includes(selectedCurrency)) {
                                                         return null;
@@ -2275,36 +2321,77 @@ function CheckoutPage() {
                     apiSecret="c22d3879eff18c2d3f8f8a61d4097c230a940356a3d139ffceee11ba65b1a34c"
                     apiUrl="https://coinleyserver-production.up.railway.app"
                     debug={true} // Enable debug for troubleshooting
+                    onInit={(sdk) => {
+                        // Store SDK reference for our patch
+                        if (typeof window !== 'undefined') {
+                            window._coinleySDK = sdk;
+                            console.log('Coinley SDK initialized and stored for patching');
+                            
+                            // Apply our patch
+                            setTimeout(patchCoinleySDK, 300);
+                        }
+                    }}
                 >
                     <CoinleyCheckout
                         ref={coinleyCheckoutRef}
                         customerEmail={customerInfo.email || ''}
                         merchantName="FreshBites"
-                        merchantWalletAddresses={merchantWalletAddresses}
+                        merchantWalletAddresses={RECIPIENT_ADDRESSES}
+                        recipientAddress={RECIPIENT_ADDRESSES[selectedNetwork]}
+                        toAddress={RECIPIENT_ADDRESSES[selectedNetwork]}
                         onSuccess={handlePaymentSuccess}
                         onError={(error) => {
                             console.error('Detailed payment error:', error);
                             console.log('Error details:', error);
-                            console.log('Current wallet addresses:', merchantWalletAddresses);
+                            console.log('Current wallet addresses:', RECIPIENT_ADDRESSES);
                             console.log('Selected network:', selectedNetwork);
-                            console.log('Recipient address:', merchantWalletAddresses[selectedNetwork]);
+                            console.log('Recipient address:', RECIPIENT_ADDRESSES[selectedNetwork]);
+                            
+                            // Try to fix recipient address issue directly in the error handler
+                            if (error?.message?.includes('Recipient address not provided') && 
+                                typeof window !== 'undefined' && window._coinleySDK) {
+                                
+                                console.log('Attempting emergency fix for recipient address...');
+                                
+                                try {
+                                    // Force inject the correct recipient address
+                                    const fixedAddress = RECIPIENT_ADDRESSES[selectedNetwork];
+                                    if (window._coinleySDK.state && fixedAddress) {
+                                        window._coinleySDK.state.recipientAddress = fixedAddress;
+                                        window._coinleySDK.state.toAddress = fixedAddress;
+                                        
+                                        // If there's a pendingTransaction, fix it too
+                                        if (window._coinleySDK.state.pendingTransaction) {
+                                            window._coinleySDK.state.pendingTransaction.toAddress = fixedAddress;
+                                        }
+                                        
+                                        console.log('Emergency fix applied, retrying transaction...');
+                                        // Attempt to continue the transaction
+                                        setTimeout(() => {
+                                            window._coinleySDK.sendTransaction({
+                                                toAddress: fixedAddress,
+                                                amount: total,
+                                                tokenConfig: window._coinleySDK.state.selectedTokenConfig
+                                            });
+                                        }, 500);
+                                        
+                                        return; // Don't show error to user if we're trying to fix it
+                                    }
+                                } catch (fixError) {
+                                    console.error('Error applying emergency fix:', fixError);
+                                }
+                            }
+                            
                             handlePaymentError(error);
                         }}
                         onClose={handleCloseModal}
                         theme="light"
                         autoOpen={false}
-                        testMode={false} // Set to false for real transactions
-                        supportedNetworks={[
-                            SAFE_NETWORK_TYPES.ETHEREUM, 
-                            SAFE_NETWORK_TYPES.BSC, 
-                            SAFE_NETWORK_TYPES.TRON,
-                            SAFE_NETWORK_TYPES.ALGORAND
-                        ]}
+                        testMode={false}
+                        supportedNetworks={Object.keys(RECIPIENT_ADDRESSES)}
                         supportedCurrencies={availableCurrencies}
                         defaultCurrency={selectedCurrency}
                         defaultNetwork={selectedNetwork}
-                        // Add direct recipient address prop if supported by SDK
-                        recipientAddress={merchantWalletAddresses[selectedNetwork]}
                     />
                 </CoinleyProvider>
             </ThemeProvider>
