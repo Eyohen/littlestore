@@ -1628,48 +1628,125 @@ function CheckoutPage() {
     const tax = subtotal * taxRate;
     const total = subtotal + shippingCost + tax;
     
-    // Create a patched SDK to fix the recipient address issue
-    const patchCoinleySDK = useCallback(() => {
-        try {
-            // Check if we can access the window object
-            if (typeof window !== 'undefined' && window.document) {
-                // Wait a short time for SDK to load
-                setTimeout(() => {
-                    // Find the original send transaction function and patch it
-                    const originalSendTx = window._coinleySDK?.sendTransaction;
-                    if (originalSendTx && !window._coinleySDKPatched) {
-                        console.log('Patching Coinley SDK transaction function...');
-                        
-                        // Store the original function and create a patched version
-                        window._originalSendTx = originalSendTx;
-                        window._coinleySDKPatched = true;
-                        
-                        // Override the function to ensure recipient address is provided
-                        window._coinleySDK.sendTransaction = (params) => {
-                            console.log('Patched sendTransaction called with params:', params);
-                            
-                            // Get the current network from the SDK state or use our selected network
-                            const currentNetwork = window._coinleySDK?.state?.selectedPaymentMethod?.network || selectedNetwork;
-                            
-                            // Fix missing recipient address
-                            if (!params.toAddress || params.toAddress === 'undefined') {
-                                console.log(`Fixing missing recipient address for network: ${currentNetwork}`);
-                                params.toAddress = RECIPIENT_ADDRESSES[currentNetwork];
-                                console.log('New params with fixed address:', params);
+    // Add a script to the document that will directly patch the SDK
+    useEffect(() => {
+        if (typeof window !== 'undefined' && !window._coinleyPatchApplied) {
+            window._coinleyPatchApplied = true;
+            
+            // Create a script element to inject our patch
+            const script = document.createElement('script');
+            script.innerHTML = `
+                (function() {
+                    // Define a recurring function that will keep checking for the SDK
+                    function patchCoinleySDK() {
+                        try {
+                            // Check if window._coinleySDK exists
+                            if (window._coinleySDK && window._coinleySDK.sendTransaction && !window._coinleySDKPatched) {
+                                console.log('Direct DOM patch: Patching Coinley SDK...');
+                                
+                                // Store original function
+                                window._originalSendTx = window._coinleySDK.sendTransaction;
+                                window._coinleySDKPatched = true;
+                                
+                                // Override with our patched version
+                                window._coinleySDK.sendTransaction = function(params) {
+                                    console.log('Direct DOM patch: Transaction intercepted', params);
+                                    
+                                    // Fix missing recipient address
+                                    if (!params.toAddress || params.toAddress === 'undefined') {
+                                        // Get the current network
+                                        const currentNetwork = window._coinleySDK?.state?.selectedPaymentMethod?.network || 'ethereum';
+                                        
+                                        // Hard-code addresses for all networks
+                                        const addresses = {
+                                            'ethereum': '0x581c333Ca62d04bADb563750535C935516b90839',
+                                            'bsc': '0x581c333Ca62d04bADb563750535C935516b90839',
+                                            'tron': 'TV3d7eKYnaV4NVbwrqEPoyib9yXbZUYEBJ',
+                                            'algorand': 'LVUECLJSQODSDJNYRXVKLHKMN7XA2M3PGPKYNACDRGSKCQISFN6IXTVPOA'
+                                        };
+                                        
+                                        // Set the address
+                                        params.toAddress = addresses[currentNetwork];
+                                        console.log('Direct DOM patch: Fixed recipient address', params.toAddress);
+                                    }
+                                    
+                                    // Call original function with fixed params
+                                    return window._originalSendTx(params);
+                                };
+                                
+                                // Also patch the SDK's internal functions that might handle transactions
+                                if (window._coinleySDK._sendTransaction) {
+                                    window._originalSendTxInternal = window._coinleySDK._sendTransaction;
+                                    window._coinleySDK._sendTransaction = function(params) {
+                                        console.log('Direct DOM patch: Internal transaction intercepted', params);
+                                        
+                                        // Fix missing recipient address
+                                        if (!params.toAddress || params.toAddress === 'undefined') {
+                                            // Hard-code addresses for all networks
+                                            const addresses = {
+                                                'ethereum': '0x581c333Ca62d04bADb563750535C935516b90839',
+                                                'bsc': '0x581c333Ca62d04bADb563750535C935516b90839',
+                                                'tron': 'TV3d7eKYnaV4NVbwrqEPoyib9yXbZUYEBJ',
+                                                'algorand': 'LVUECLJSQODSDJNYRXVKLHKMN7XA2M3PGPKYNACDRGSKCQISFN6IXTVPOA'
+                                            };
+                                            
+                                            // Get current network
+                                            const currentNetwork = window._coinleySDK?.state?.selectedPaymentMethod?.network || 'ethereum';
+                                            
+                                            // Set the address
+                                            params.toAddress = addresses[currentNetwork];
+                                            console.log('Direct DOM patch: Fixed internal recipient address', params.toAddress);
+                                        }
+                                        
+                                        // Call original function with fixed params
+                                        return window._originalSendTxInternal(params);
+                                    };
+                                }
+                                
+                                // Set up a watcher that will re-fix transaction parameters if SDK tries to reset them
+                                setInterval(function() {
+                                    try {
+                                        if (window._coinleySDK && window._coinleySDK.state && window._coinleySDK.state.pendingTransaction) {
+                                            const tx = window._coinleySDK.state.pendingTransaction;
+                                            
+                                            if (!tx.toAddress || tx.toAddress === 'undefined') {
+                                                const currentNetwork = window._coinleySDK?.state?.selectedPaymentMethod?.network || 'ethereum';
+                                                const addresses = {
+                                                    'ethereum': '0x581c333Ca62d04bADb563750535C935516b90839',
+                                                    'bsc': '0x581c333Ca62d04bADb563750535C935516b90839',
+                                                    'tron': 'TV3d7eKYnaV4NVbwrqEPoyib9yXbZUYEBJ',
+                                                    'algorand': 'LVUECLJSQODSDJNYRXVKLHKMN7XA2M3PGPKYNACDRGSKCQISFN6IXTVPOA'
+                                                };
+                                                
+                                                tx.toAddress = addresses[currentNetwork];
+                                                console.log('Direct DOM patch: Fixed pending transaction recipient address', tx.toAddress);
+                                            }
+                                        }
+                                    } catch (e) {
+                                        console.error('Direct DOM patch: Error in transaction watcher', e);
+                                    }
+                                }, 100);
+                                
+                                console.log('Direct DOM patch: Coinley SDK successfully patched');
+                            } else {
+                                // If SDK not found, try again in 300ms
+                                setTimeout(patchCoinleySDK, 300);
                             }
-                            
-                            // Call the original function with fixed parameters
-                            return window._originalSendTx(params);
-                        };
-                        
-                        console.log('Coinley SDK successfully patched');
+                        } catch (e) {
+                            console.error('Direct DOM patch: Error patching SDK', e);
+                            setTimeout(patchCoinleySDK, 300);
+                        }
                     }
-                }, 500);
-            }
-        } catch (error) {
-            console.error('Error patching Coinley SDK:', error);
+                    
+                    // Start the patching process
+                    patchCoinleySDK();
+                })();
+            `;
+            document.head.appendChild(script);
+            
+            console.log('DOM patch script injected');
         }
-    }, [selectedNetwork, RECIPIENT_ADDRESSES]);
+    }, []);
     
     // Debug: Check SDK imports on component mount
     useEffect(() => {
@@ -1679,16 +1756,7 @@ function CheckoutPage() {
             TOKEN_CONFIG,
             RECIPIENT_ADDRESSES
         });
-        
-        // Apply SDK patch
-        patchCoinleySDK();
-        
-        // Expose important objects for debugging
-        if (typeof window !== 'undefined') {
-            window._RECIPIENT_ADDRESSES = RECIPIENT_ADDRESSES;
-            window._networkCurrencyMap = networkCurrencyMap;
-        }
-    }, [patchCoinleySDK, RECIPIENT_ADDRESSES, networkCurrencyMap]);
+    }, [RECIPIENT_ADDRESSES]);
     
     // Update network when currency changes
     const updateNetworkForCurrency = (currency) => {
@@ -1808,8 +1876,14 @@ function CheckoutPage() {
             }
             
             // Make sure our SDK patch is applied
-            if (typeof window !== 'undefined' && !window._coinleySDKPatched) {
-                patchCoinleySDK();
+            if (typeof window !== 'undefined') {
+                // Make hardcoded wallet addresses available globally
+                window._WALLET_ADDRESSES = {
+                    ethereum: RECIPIENT_ADDRESSES.ethereum,
+                    bsc: RECIPIENT_ADDRESSES.bsc,
+                    tron: RECIPIENT_ADDRESSES.tron,
+                    algorand: RECIPIENT_ADDRESSES.algorand
+                };
             }
             
             // Create direct merchant wallet addresses object with network strings as keys
@@ -2326,9 +2400,6 @@ function CheckoutPage() {
                         if (typeof window !== 'undefined') {
                             window._coinleySDK = sdk;
                             console.log('Coinley SDK initialized and stored for patching');
-                            
-                            // Apply our patch
-                            setTimeout(patchCoinleySDK, 300);
                         }
                     }}
                 >
@@ -2349,34 +2420,65 @@ function CheckoutPage() {
                             
                             // Try to fix recipient address issue directly in the error handler
                             if (error?.message?.includes('Recipient address not provided') && 
-                                typeof window !== 'undefined' && window._coinleySDK) {
+                                typeof window !== 'undefined') {
                                 
                                 console.log('Attempting emergency fix for recipient address...');
                                 
                                 try {
-                                    // Force inject the correct recipient address
+                                    // Force inject the correct recipient address using the DOM
                                     const fixedAddress = RECIPIENT_ADDRESSES[selectedNetwork];
-                                    if (window._coinleySDK.state && fixedAddress) {
-                                        window._coinleySDK.state.recipientAddress = fixedAddress;
-                                        window._coinleySDK.state.toAddress = fixedAddress;
-                                        
-                                        // If there's a pendingTransaction, fix it too
-                                        if (window._coinleySDK.state.pendingTransaction) {
-                                            window._coinleySDK.state.pendingTransaction.toAddress = fixedAddress;
-                                        }
-                                        
-                                        console.log('Emergency fix applied, retrying transaction...');
-                                        // Attempt to continue the transaction
-                                        setTimeout(() => {
-                                            window._coinleySDK.sendTransaction({
-                                                toAddress: fixedAddress,
-                                                amount: total,
-                                                tokenConfig: window._coinleySDK.state.selectedTokenConfig
-                                            });
-                                        }, 500);
-                                        
-                                        return; // Don't show error to user if we're trying to fix it
-                                    }
+                                    
+                                    // Create a script to directly access and fix the SDK state
+                                    const script = document.createElement('script');
+                                    script.innerHTML = `
+                                        (function() {
+                                            try {
+                                                // Access SDK and fix state
+                                                if (window._coinleySDK && window._coinleySDK.state) {
+                                                    // Get the fixed address
+                                                    const fixedAddress = '${fixedAddress}';
+                                                    const network = '${selectedNetwork}';
+                                                    
+                                                    console.log('Emergency fix: Setting recipient address to ' + fixedAddress + ' for network ' + network);
+                                                    
+                                                    // Fix all possible locations
+                                                    window._coinleySDK.state.recipientAddress = fixedAddress;
+                                                    window._coinleySDK.state.toAddress = fixedAddress;
+                                                    
+                                                    if (window._coinleySDK.state.pendingTransaction) {
+                                                        window._coinleySDK.state.pendingTransaction.toAddress = fixedAddress;
+                                                    }
+                                                    
+                                                    if (window._coinleySDK.state.config) {
+                                                        window._coinleySDK.state.config.recipientAddress = fixedAddress;
+                                                        window._coinleySDK.state.config.toAddress = fixedAddress;
+                                                    }
+                                                    
+                                                    // Try to retry the transaction
+                                                    setTimeout(function() {
+                                                        try {
+                                                            if (window._coinleySDK.sendTransaction) {
+                                                                window._coinleySDK.sendTransaction({
+                                                                    toAddress: fixedAddress,
+                                                                    network: network,
+                                                                    amount: ${total},
+                                                                    tokenConfig: window._coinleySDK.state.selectedTokenConfig
+                                                                });
+                                                            }
+                                                        } catch(e) {
+                                                            console.error('Error in emergency fix retry:', e);
+                                                        }
+                                                    }, 500);
+                                                }
+                                            } catch(e) {
+                                                console.error('Error in emergency fix script:', e);
+                                            }
+                                        })();
+                                    `;
+                                    document.head.appendChild(script);
+                                    
+                                    // Don't show error to user while we're trying to fix it
+                                    return;
                                 } catch (fixError) {
                                     console.error('Error applying emergency fix:', fixError);
                                 }
