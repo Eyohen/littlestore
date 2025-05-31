@@ -1549,51 +1549,26 @@
 
 
 
-// CheckoutPage.jsx - Improved Version
+// CheckoutPage.jsx - FIXED VERSION WITH PROPER WALLET ADDRESS HANDLING
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import axios from 'axios';
 import { URL } from '../url';
 
-// Import the SDK components and constants with destructuring to ensure they're properly imported
+// Import the SDK components properly
 import { 
   ThemeProvider, 
   CoinleyProvider, 
   CoinleyCheckout,
   NETWORK_TYPES,
-  WALLET_TYPES,
-  TOKEN_CONFIG
+  WALLET_TYPES
 } from 'coinley-checkout';
 
 function CheckoutPage() {
     const navigate = useNavigate();
     const { cartItems, subtotal, clearCart } = useCart();
     const coinleyCheckoutRef = useRef(null);
-    
-    // Define networks in plain strings to avoid reference issues
-    const NETWORKS = {
-        ETHEREUM: 'ethereum',
-        BSC: 'bsc',
-        TRON: 'tron',
-        ALGORAND: 'algorand'
-    };
-
-    // Create direct recipient address mapping using plain strings
-    const RECIPIENT_ADDRESSES = {
-        'ethereum': '0x581c333Ca62d04bADb563750535C935516b90839',
-        'bsc': '0x581c333Ca62d04bADb563750535C935516b90839',
-        'tron': 'TV3d7eKYnaV4NVbwrqEPoyib9yXbZUYEBJ',
-        'algorand': 'LVUECLJSQODSDJNYRXVKLHKMN7XA2M3PGPKYNACDRGSKCQISFN6IXTVPOA'
-    };
-
-    // Network to currency mapping for recommended networks
-    const networkCurrencyMap = {
-        'ethereum': ['USDT', 'USDC', 'ETH'],
-        'bsc': ['USDT', 'USDC', 'BNB'],
-        'tron': ['USDT', 'USDC', 'TRX'],
-        'algorand': ['USDT', 'USDC', 'ALGO']
-    };
     
     // Customer information state
     const [customerInfo, setCustomerInfo] = useState({
@@ -1615,163 +1590,38 @@ function CheckoutPage() {
     const [currentOrderId, setCurrentOrderId] = useState(null);
     const [paymentStatus, setPaymentStatus] = useState('pending');
     
-    // Select currency options
+    // Currency and network selection
     const [selectedCurrency, setSelectedCurrency] = useState('USDT');
     const [selectedNetwork, setSelectedNetwork] = useState('ethereum');
     
-    // Available currencies
+    // Available options
     const availableCurrencies = ['USDT', 'USDC', 'ETH', 'BNB', 'TRX', 'ALGO'];
+    const availableNetworks = ['ethereum', 'bsc', 'tron', 'algorand'];
+    
+    // Network to currency mapping
+    const networkCurrencyMap = {
+        'ethereum': ['USDT', 'USDC', 'ETH', 'DAI', 'FRAX', 'PYUSD'],
+        'bsc': ['USDT', 'USDC', 'BNB', 'BUSD', 'FRAX'],
+        'tron': ['USDT', 'USDC', 'TRX', 'USDJ'],
+        'algorand': ['USDT', 'USDC', 'ALGO']
+    };
     
     // Calculate order totals
-    const shippingCost = subtotal > 50 ? 0 : 0.001;
-    const taxRate = 0.001;
+    const shippingCost = subtotal > 50 ? 0 : 5.99;
+    const taxRate = 0.08;
     const tax = subtotal * taxRate;
     const total = subtotal + shippingCost + tax;
     
-    // Add a script to the document that will directly patch the SDK
-    useEffect(() => {
-        if (typeof window !== 'undefined' && !window._coinleyPatchApplied) {
-            window._coinleyPatchApplied = true;
-            
-            // Create a script element to inject our patch
-            const script = document.createElement('script');
-            script.innerHTML = `
-                (function() {
-                    // Define a recurring function that will keep checking for the SDK
-                    function patchCoinleySDK() {
-                        try {
-                            // Check if window._coinleySDK exists
-                            if (window._coinleySDK && window._coinleySDK.sendTransaction && !window._coinleySDKPatched) {
-                                console.log('Direct DOM patch: Patching Coinley SDK...');
-                                
-                                // Store original function
-                                window._originalSendTx = window._coinleySDK.sendTransaction;
-                                window._coinleySDKPatched = true;
-                                
-                                // Override with our patched version
-                                window._coinleySDK.sendTransaction = function(params) {
-                                    console.log('Direct DOM patch: Transaction intercepted', params);
-                                    
-                                    // Fix missing recipient address
-                                    if (!params.toAddress || params.toAddress === 'undefined') {
-                                        // Get the current network
-                                        const currentNetwork = window._coinleySDK?.state?.selectedPaymentMethod?.network || 'ethereum';
-                                        
-                                        // Hard-code addresses for all networks
-                                        const addresses = {
-                                            'ethereum': '0x581c333Ca62d04bADb563750535C935516b90839',
-                                            'bsc': '0x581c333Ca62d04bADb563750535C935516b90839',
-                                            'tron': 'TV3d7eKYnaV4NVbwrqEPoyib9yXbZUYEBJ',
-                                            'algorand': 'LVUECLJSQODSDJNYRXVKLHKMN7XA2M3PGPKYNACDRGSKCQISFN6IXTVPOA'
-                                        };
-                                        
-                                        // Set the address
-                                        params.toAddress = addresses[currentNetwork];
-                                        console.log('Direct DOM patch: Fixed recipient address', params.toAddress);
-                                    }
-                                    
-                                    // Call original function with fixed params
-                                    return window._originalSendTx(params);
-                                };
-                                
-                                // Also patch the SDK's internal functions that might handle transactions
-                                if (window._coinleySDK._sendTransaction) {
-                                    window._originalSendTxInternal = window._coinleySDK._sendTransaction;
-                                    window._coinleySDK._sendTransaction = function(params) {
-                                        console.log('Direct DOM patch: Internal transaction intercepted', params);
-                                        
-                                        // Fix missing recipient address
-                                        if (!params.toAddress || params.toAddress === 'undefined') {
-                                            // Hard-code addresses for all networks
-                                            const addresses = {
-                                                'ethereum': '0x581c333Ca62d04bADb563750535C935516b90839',
-                                                'bsc': '0x581c333Ca62d04bADb563750535C935516b90839',
-                                                'tron': 'TV3d7eKYnaV4NVbwrqEPoyib9yXbZUYEBJ',
-                                                'algorand': 'LVUECLJSQODSDJNYRXVKLHKMN7XA2M3PGPKYNACDRGSKCQISFN6IXTVPOA'
-                                            };
-                                            
-                                            // Get current network
-                                            const currentNetwork = window._coinleySDK?.state?.selectedPaymentMethod?.network || 'ethereum';
-                                            
-                                            // Set the address
-                                            params.toAddress = addresses[currentNetwork];
-                                            console.log('Direct DOM patch: Fixed internal recipient address', params.toAddress);
-                                        }
-                                        
-                                        // Call original function with fixed params
-                                        return window._originalSendTxInternal(params);
-                                    };
-                                }
-                                
-                                // Set up a watcher that will re-fix transaction parameters if SDK tries to reset them
-                                setInterval(function() {
-                                    try {
-                                        if (window._coinleySDK && window._coinleySDK.state && window._coinleySDK.state.pendingTransaction) {
-                                            const tx = window._coinleySDK.state.pendingTransaction;
-                                            
-                                            if (!tx.toAddress || tx.toAddress === 'undefined') {
-                                                const currentNetwork = window._coinleySDK?.state?.selectedPaymentMethod?.network || 'ethereum';
-                                                const addresses = {
-                                                    'ethereum': '0x581c333Ca62d04bADb563750535C935516b90839',
-                                                    'bsc': '0x581c333Ca62d04bADb563750535C935516b90839',
-                                                    'tron': 'TV3d7eKYnaV4NVbwrqEPoyib9yXbZUYEBJ',
-                                                    'algorand': 'LVUECLJSQODSDJNYRXVKLHKMN7XA2M3PGPKYNACDRGSKCQISFN6IXTVPOA'
-                                                };
-                                                
-                                                tx.toAddress = addresses[currentNetwork];
-                                                console.log('Direct DOM patch: Fixed pending transaction recipient address', tx.toAddress);
-                                            }
-                                        }
-                                    } catch (e) {
-                                        console.error('Direct DOM patch: Error in transaction watcher', e);
-                                    }
-                                }, 100);
-                                
-                                console.log('Direct DOM patch: Coinley SDK successfully patched');
-                            } else {
-                                // If SDK not found, try again in 300ms
-                                setTimeout(patchCoinleySDK, 300);
-                            }
-                        } catch (e) {
-                            console.error('Direct DOM patch: Error patching SDK', e);
-                            setTimeout(patchCoinleySDK, 300);
-                        }
-                    }
-                    
-                    // Start the patching process
-                    patchCoinleySDK();
-                })();
-            `;
-            document.head.appendChild(script);
-            
-            console.log('DOM patch script injected');
-        }
-    }, []);
-    
-    // Debug: Check SDK imports on component mount
-    useEffect(() => {
-        console.log('SDK Import Check:', {
-            NETWORK_TYPES,
-            WALLET_TYPES,
-            TOKEN_CONFIG,
-            RECIPIENT_ADDRESSES
-        });
-    }, [RECIPIENT_ADDRESSES]);
-    
     // Update network when currency changes
     const updateNetworkForCurrency = (currency) => {
-        // Find networks that support this currency
         const supportedNetworks = Object.keys(networkCurrencyMap).filter(network => 
             networkCurrencyMap[network].includes(currency)
         );
         
         if (supportedNetworks.length > 0) {
-            // Prefer current network if it supports the currency
             if (supportedNetworks.includes(selectedNetwork)) {
                 return; // Keep current network
             }
-            
-            // Otherwise select first compatible network
             setSelectedNetwork(supportedNetworks[0]);
         }
     };
@@ -1812,12 +1662,7 @@ function CheckoutPage() {
                 throw new Error('Please enter a valid email address');
             }
             
-            // Verify we have wallet addresses
-            if (!RECIPIENT_ADDRESSES[selectedNetwork]) {
-                throw new Error(`No wallet address configured for the selected network: ${selectedNetwork}`);
-            }
-            
-            // Create order object with real cart data
+            // Create order object
             const order = {
                 items: cartItems,
                 customer: customerInfo,
@@ -1834,11 +1679,10 @@ function CheckoutPage() {
                 }
             };
             
-            // Make real API call to create order
+            // Create order in backend
             const orderResponse = await axios.post(`${URL}/api/orders`, order);
             const orderId = orderResponse.data.id;
             
-            // Store order ID for reference
             setCurrentOrderId(orderId);
             localStorage.setItem('currentOrderId', orderId);
             
@@ -1858,91 +1702,31 @@ function CheckoutPage() {
     // Initialize payment with Coinley
     const initiatePayment = (orderId) => {
         if (coinleyCheckoutRef.current) {
-            // Get recipient address for selected network - use direct string
-            const recipientAddress = RECIPIENT_ADDRESSES[selectedNetwork];
-            
             console.log('Initiating payment with:', {
                 network: selectedNetwork,
                 currency: selectedCurrency,
-                amount: total,
-                recipientAddress
+                amount: total
             });
             
-            // Validate recipient address
-            if (!recipientAddress) {
-                setError(`No wallet address configured for ${selectedNetwork}. Please contact support.`);
-                setProcessing(false);
-                return;
-            }
-            
-            // Make sure our SDK patch is applied
-            if (typeof window !== 'undefined') {
-                // Make hardcoded wallet addresses available globally
-                window._WALLET_ADDRESSES = {
-                    ethereum: RECIPIENT_ADDRESSES.ethereum,
-                    bsc: RECIPIENT_ADDRESSES.bsc,
-                    tron: RECIPIENT_ADDRESSES.tron,
-                    algorand: RECIPIENT_ADDRESSES.algorand
-                };
-            }
-            
-            // Create direct merchant wallet addresses object with network strings as keys
-            const directMerchantWallets = {};
-            Object.keys(RECIPIENT_ADDRESSES).forEach(network => {
-                directMerchantWallets[network] = RECIPIENT_ADDRESSES[network];
-            });
-            
-            // Make a flat version to ensure compatibility
-            const flatMerchantWallets = {
-                ethereum: RECIPIENT_ADDRESSES.ethereum,
-                bsc: RECIPIENT_ADDRESSES.bsc,
-                tron: RECIPIENT_ADDRESSES.tron,
-                algorand: RECIPIENT_ADDRESSES.algorand
-            };
-            
-            // Create payment configuration object
+            // Create payment configuration
             const paymentConfig = {
                 amount: total,
                 currency: selectedCurrency,
+                network: selectedNetwork,
                 customerEmail: customerInfo.email,
                 callbackUrl: `${window.location.origin}/api/webhooks/payments/coinley`,
-                // Define recipient address in multiple ways to ensure it's found
-                merchantWalletAddresses: flatMerchantWallets,
-                recipientAddress: recipientAddress,
-                toAddress: recipientAddress,
-                recipientWallet: recipientAddress,
-                address: recipientAddress,
-                preferredNetwork: selectedNetwork,
-                network: selectedNetwork,
-                debug: true,
-                testMode: false, // Ensure real transactions
                 metadata: {
                     orderId: orderId,
                     customerName: `${customerInfo.firstName} ${customerInfo.lastName}`,
-                    recipientAddress: recipientAddress,
-                    network: selectedNetwork,
-                    // Add networks mapping for SDK internal use
-                    networks: flatMerchantWallets
+                    source: 'ecommerce-checkout'
                 }
             };
             
-            // Expose for debugging
-            if (typeof window !== 'undefined') {
-                window._lastPaymentConfig = paymentConfig;
-            }
-            
-            // Log the complete payment configuration
             console.log('Payment configuration:', paymentConfig);
             
             try {
-                // Open the payment modal with explicit configuration
+                // Open the payment modal
                 coinleyCheckoutRef.current.open(paymentConfig);
-                
-                // Store important data in window for SDK patch to access
-                if (typeof window !== 'undefined') {
-                    window._currentPaymentNetwork = selectedNetwork;
-                    window._currentRecipientAddress = recipientAddress;
-                }
             } catch (error) {
                 console.error("Error opening Coinley checkout:", error);
                 setError(`Payment initialization failed: ${error.message}`);
@@ -1983,6 +1767,9 @@ function CheckoutPage() {
             // Clear the cart
             clearCart();
             
+            // Clean up localStorage
+            localStorage.removeItem('currentOrderId');
+            
             // Redirect to success page
             navigate('/order-success', {
                 state: {
@@ -2009,32 +1796,20 @@ function CheckoutPage() {
         console.error('Payment error:', error);
         setPaymentStatus('failed');
         
-        // Get detailed error message
-        const errorMessage = error.message || 'Unknown error';
-        console.log('Error details:', error);
+        let errorMessage = error.message || 'Unknown error';
         
-        // Log the current wallet configuration for debugging
-        console.log('Error debugging info:', {
-            selectedNetwork,
-            selectedCurrency,
-            walletAddresses: RECIPIENT_ADDRESSES,
-            specificAddress: RECIPIENT_ADDRESSES[selectedNetwork]
-        });
-        
-        // Show specific error message based on error type
-        if (errorMessage.includes('Recipient address not provided')) {
-            setError(`Payment failed: Recipient address issue. Please contact support with this info:
-            Network: ${selectedNetwork}
-            Address: ${RECIPIENT_ADDRESSES[selectedNetwork] || 'Not found'}
-            `);
-        } else if (errorMessage.includes('User rejected')) {
-            setError('Payment was rejected. You can try again when ready.');
+        // Provide user-friendly error messages
+        if (errorMessage.includes('User rejected') || errorMessage.includes('user rejected')) {
+            errorMessage = 'Payment was cancelled. You can try again when ready.';
         } else if (errorMessage.includes('insufficient funds')) {
-            setError('Payment failed: Insufficient funds in your wallet. Please add funds and try again.');
-        } else {
-            setError(`Payment failed: ${errorMessage}`);
+            errorMessage = 'Insufficient funds in your wallet. Please add funds and try again.';
+        } else if (errorMessage.includes('network')) {
+            errorMessage = 'Network error. Please check your connection and try again.';
+        } else if (errorMessage.includes('wallet')) {
+            errorMessage = 'Wallet connection error. Please make sure your wallet is unlocked and try again.';
         }
         
+        setError(errorMessage);
         setProcessing(false);
     };
     
@@ -2073,131 +1848,131 @@ function CheckoutPage() {
                                 </div>
 
                                 <div className="col-span-1">
-                                     <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                                       Last Name*
-                                   </label>
-                                   <input
-                                       type="text"
-                                       id="lastName"
-                                       name="lastName"
-                                       value={customerInfo.lastName}
-                                       onChange={handleInputChange}
-                                       required
-                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
-                                   />
-                               </div>
+                                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Last Name*
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="lastName"
+                                        name="lastName"
+                                        value={customerInfo.lastName}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
+                                    />
+                                </div>
 
                                 <div className="col-span-2">
-                                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                                       Email Address*
-                                   </label>
-                                   <input
-                                       type="email"
-                                       id="email"
-                                       name="email"
-                                       value={customerInfo.email}
-                                       onChange={handleInputChange}
-                                       required
-                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
-                                   />
-                               </div>
+                                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Email Address*
+                                    </label>
+                                    <input
+                                        type="email"
+                                        id="email"
+                                        name="email"
+                                        value={customerInfo.email}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
+                                    />
+                                </div>
 
                                 <div className="col-span-2">
-                                   <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                                       Address*
-                                   </label>
-                                   <input
-                                       type="text"
-                                       id="address"
-                                       name="address"
-                                       value={customerInfo.address}
-                                       onChange={handleInputChange}
-                                       required
-                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
-                                   />
-                               </div>
+                                    <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Address*
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="address"
+                                        name="address"
+                                        value={customerInfo.address}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
+                                    />
+                                </div>
 
                                 <div className="col-span-1">
-                                   <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                                       City*
-                                   </label>
-                                   <input
-                                       type="text"
-                                       id="city"
-                                       name="city"
-                                       value={customerInfo.city}
-                                       onChange={handleInputChange}
-                                       required
-                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
-                                   />
-                               </div>
+                                    <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+                                        City*
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="city"
+                                        name="city"
+                                        value={customerInfo.city}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
+                                    />
+                                </div>
 
                                 <div className="col-span-1">
-                                   <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
-                                       State/Province*
-                                   </label>
-                                   <input
-                                       type="text"
-                                       id="state"
-                                       name="state"
-                                       value={customerInfo.state}
-                                       onChange={handleInputChange}
-                                       required
-                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
-                                   />
-                               </div>
+                                    <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
+                                        State/Province*
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="state"
+                                        name="state"
+                                        value={customerInfo.state}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
+                                    />
+                                </div>
 
                                 <div className="col-span-1">
-                                   <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-1">
-                                       ZIP/Postal Code*
-                                   </label>
-                                   <input
-                                       type="text"
-                                       id="zipCode"
-                                       name="zipCode"
-                                       value={customerInfo.zipCode}
-                                       onChange={handleInputChange}
-                                       required
-                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
-                                   />
-                               </div>
+                                    <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-1">
+                                        ZIP/Postal Code*
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="zipCode"
+                                        name="zipCode"
+                                        value={customerInfo.zipCode}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
+                                    />
+                                </div>
 
                                 <div className="col-span-1">
-                                   <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
-                                       Country*
-                                   </label>
-                                   <select
-                                       id="country"
-                                       name="country"
-                                       value={customerInfo.country}
-                                       onChange={handleInputChange}
-                                       required
-                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
-                                   >
-                                       <option value="US">United States</option>
-                                       <option value="CA">Canada</option>
-                                       <option value="UK">United Kingdom</option>
-                                       <option value="AU">Australia</option>
-                                       <option value="NG">Nigeria</option>
-                                       <option value="GH">Ghana</option>
-                                       <option value="KE">Kenya</option>
-                                       <option value="ZA">South Africa</option>
-                                   </select>
-                               </div>
+                                    <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Country*
+                                    </label>
+                                    <select
+                                        id="country"
+                                        name="country"
+                                        value={customerInfo.country}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
+                                    >
+                                        <option value="US">United States</option>
+                                        <option value="CA">Canada</option>
+                                        <option value="UK">United Kingdom</option>
+                                        <option value="AU">Australia</option>
+                                        <option value="NG">Nigeria</option>
+                                        <option value="GH">Ghana</option>
+                                        <option value="KE">Kenya</option>
+                                        <option value="ZA">South Africa</option>
+                                    </select>
+                                </div>
 
                                 <div className="col-span-2">
-                                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                                       Phone Number*
-                                   </label>
-                                   <input
-                                       type="tel"
-                                       id="phone"
-                                       name="phone"
-                                       value={customerInfo.phone}
-                                       onChange={handleInputChange}
-                                       required
-                                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
-                                     />
+                                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Phone Number*
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        id="phone"
+                                        name="phone"
+                                        value={customerInfo.phone}
+                                        onChange={handleInputChange}
+                                        required
+                                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7042D2]"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -2250,8 +2025,7 @@ function CheckoutPage() {
                                                 Preferred Network
                                             </label>
                                             <div className="flex flex-wrap gap-2">
-                                                {Object.keys(NETWORKS).map(networkKey => {
-                                                    const network = NETWORKS[networkKey].toLowerCase();
+                                                {availableNetworks.map(network => {
                                                     // Only show networks that support the selected currency
                                                     if (!networkCurrencyMap[network]?.includes(selectedCurrency)) {
                                                         return null;
@@ -2261,13 +2035,13 @@ function CheckoutPage() {
                                                             key={network}
                                                             type="button"
                                                             onClick={() => setSelectedNetwork(network)}
-                                                            className={`px-3 py-1 rounded-md text-sm ${
+                                                            className={`px-3 py-1 rounded-md text-sm capitalize ${
                                                                 selectedNetwork === network 
                                                                     ? 'bg-blue-600 text-white' 
                                                                     : 'bg-white text-blue-600 border border-blue-300'
                                                             }`}
                                                         >
-                                                            {networkKey}
+                                                            {network}
                                                         </button>
                                                     );
                                                 })}
@@ -2298,7 +2072,7 @@ function CheckoutPage() {
 
                             <button
                                 type="submit"
-                                className="w-full py-2 px-4 bg-[#7042D2] hover:bg-[#8152E2] text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7042D2]"
+                                className="w-full py-3 px-4 bg-[#7042D2] hover:bg-[#8152E2] text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7042D2] disabled:opacity-50 disabled:cursor-not-allowed"
                                 disabled={processing || paymentStatus === 'success'}
                             >
                                 {processing ? (
@@ -2327,25 +2101,25 @@ function CheckoutPage() {
                                 {cartItems.map((item) => (
                                     <li key={item.id} className="py-3 flex items-center">
                                         <div className="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-md overflow-hidden">
-                                             {item.imageUrl ? (
-                                                 <img 
-                                                     src={item.imageUrl} 
-                                                     alt={item.name} 
-                                                     className="w-full h-full object-cover"
-                                                 />
-                                             ) : (
-                                                 <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                                                     <span className="text-gray-400">{item.name[0]}</span>
-                                                 </div>
-                                             )}
-                                         </div>
-                                         <div className="ml-3 flex-1">
-                                             <p className="text-sm font-medium text-gray-900">{item.name}</p>
-                                             <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
-                                         </div>
-                                         <p className="text-sm font-medium text-gray-900">
-                                             ${(item.price * item.quantity).toFixed(2)}
-                                         </p>
+                                            {item.imageUrl ? (
+                                                <img 
+                                                    src={item.imageUrl} 
+                                                    alt={item.name} 
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                                                    <span className="text-gray-400">{item.name[0]}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="ml-3 flex-1">
+                                            <p className="text-sm font-medium text-gray-900">{item.name}</p>
+                                            <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-900">
+                                            ${(item.price * item.quantity).toFixed(2)}
+                                        </p>
                                     </li>
                                 ))}
                             </ul>
@@ -2362,7 +2136,7 @@ function CheckoutPage() {
                                 <p className="text-sm font-medium text-gray-900">
                                     {shippingCost === 0
                                         ? <span className="text-green-600">Free</span>
-                                        : `$${shippingCost.toFixed(2)}`
+                                        : `${shippingCost.toFixed(2)}`
                                     }
                                 </p>
                             </div>
@@ -2375,7 +2149,7 @@ function CheckoutPage() {
                             <div className="flex justify-between border-t pt-3">
                                 <p className="text-base font-medium text-gray-900">Total</p>
                                 <div className="text-right">
-                                    <p className="text-base font-bold text-blue-600">${total.toFixed(2)}</p>
+                                    <p className="text-base font-bold text-[#7042D2]">${total.toFixed(2)}</p>
                                     {selectedCurrency && selectedCurrency !== 'USD' && (
                                         <p className="text-xs text-gray-500 mt-1">
                                             Pay with: {selectedCurrency} on {selectedNetwork}
@@ -2388,112 +2162,29 @@ function CheckoutPage() {
                 </div>
             </div>
 
-            {/* Enhanced Coinley Checkout Component */}
+            {/* Coinley Checkout Component */}
             <ThemeProvider initialTheme="light">
                 <CoinleyProvider
                     apiKey="afb78ff958350b9067798dd077c28459"
                     apiSecret="c22d3879eff18c2d3f8f8a61d4097c230a940356a3d139ffceee11ba65b1a34c"
                     apiUrl="https://coinleyserver-production.up.railway.app"
-                    debug={true} // Enable debug for troubleshooting
-                    onInit={(sdk) => {
-                        // Store SDK reference for our patch
-                        if (typeof window !== 'undefined') {
-                            window._coinleySDK = sdk;
-                            console.log('Coinley SDK initialized and stored for patching');
-                        }
-                    }}
+                    debug={true}
                 >
                     <CoinleyCheckout
                         ref={coinleyCheckoutRef}
                         customerEmail={customerInfo.email || ''}
                         merchantName="FreshBites"
-                        merchantWalletAddresses={RECIPIENT_ADDRESSES}
-                        recipientAddress={RECIPIENT_ADDRESSES[selectedNetwork]}
-                        toAddress={RECIPIENT_ADDRESSES[selectedNetwork]}
                         onSuccess={handlePaymentSuccess}
-                        onError={(error) => {
-                            console.error('Detailed payment error:', error);
-                            console.log('Error details:', error);
-                            console.log('Current wallet addresses:', RECIPIENT_ADDRESSES);
-                            console.log('Selected network:', selectedNetwork);
-                            console.log('Recipient address:', RECIPIENT_ADDRESSES[selectedNetwork]);
-                            
-                            // Try to fix recipient address issue directly in the error handler
-                            if (error?.message?.includes('Recipient address not provided') && 
-                                typeof window !== 'undefined') {
-                                
-                                console.log('Attempting emergency fix for recipient address...');
-                                
-                                try {
-                                    // Force inject the correct recipient address using the DOM
-                                    const fixedAddress = RECIPIENT_ADDRESSES[selectedNetwork];
-                                    
-                                    // Create a script to directly access and fix the SDK state
-                                    const script = document.createElement('script');
-                                    script.innerHTML = `
-                                        (function() {
-                                            try {
-                                                // Access SDK and fix state
-                                                if (window._coinleySDK && window._coinleySDK.state) {
-                                                    // Get the fixed address
-                                                    const fixedAddress = '${fixedAddress}';
-                                                    const network = '${selectedNetwork}';
-                                                    
-                                                    console.log('Emergency fix: Setting recipient address to ' + fixedAddress + ' for network ' + network);
-                                                    
-                                                    // Fix all possible locations
-                                                    window._coinleySDK.state.recipientAddress = fixedAddress;
-                                                    window._coinleySDK.state.toAddress = fixedAddress;
-                                                    
-                                                    if (window._coinleySDK.state.pendingTransaction) {
-                                                        window._coinleySDK.state.pendingTransaction.toAddress = fixedAddress;
-                                                    }
-                                                    
-                                                    if (window._coinleySDK.state.config) {
-                                                        window._coinleySDK.state.config.recipientAddress = fixedAddress;
-                                                        window._coinleySDK.state.config.toAddress = fixedAddress;
-                                                    }
-                                                    
-                                                    // Try to retry the transaction
-                                                    setTimeout(function() {
-                                                        try {
-                                                            if (window._coinleySDK.sendTransaction) {
-                                                                window._coinleySDK.sendTransaction({
-                                                                    toAddress: fixedAddress,
-                                                                    network: network,
-                                                                    amount: ${total},
-                                                                    tokenConfig: window._coinleySDK.state.selectedTokenConfig
-                                                                });
-                                                            }
-                                                        } catch(e) {
-                                                            console.error('Error in emergency fix retry:', e);
-                                                        }
-                                                    }, 500);
-                                                }
-                                            } catch(e) {
-                                                console.error('Error in emergency fix script:', e);
-                                            }
-                                        })();
-                                    `;
-                                    document.head.appendChild(script);
-                                    
-                                    // Don't show error to user while we're trying to fix it
-                                    return;
-                                } catch (fixError) {
-                                    console.error('Error applying emergency fix:', fixError);
-                                }
-                            }
-                            
-                            handlePaymentError(error);
-                        }}
+                        onError={handlePaymentError}
                         onClose={handleCloseModal}
                         theme="light"
                         autoOpen={false}
                         testMode={false}
-                        supportedNetworks={Object.keys(RECIPIENT_ADDRESSES)}
+                        supportedNetworks={availableNetworks}
                         supportedCurrencies={availableCurrencies}
                         defaultCurrency={selectedCurrency}
                         defaultNetwork={selectedNetwork}
+                        debug={true}
                     />
                 </CoinleyProvider>
             </ThemeProvider>
