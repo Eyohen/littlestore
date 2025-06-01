@@ -690,7 +690,7 @@ function CheckoutPage() {
     };
     
     // Calculate order totals
-    const shippingCost = subtotal > 50 ? 0 : 5.99;
+    const shippingCost = subtotal > 50 ? 0 : 0.1;
     const taxRate = 0.08;
     const tax = subtotal * taxRate;
     const total = subtotal + shippingCost + tax;
