@@ -1549,43 +1549,28 @@
 
 
 
-// CheckoutPage.jsx - Updated with Flexible Wallet Address Management
-import { useState, useEffect, useRef, useCallback } from 'react';
+
+
+
+// CheckoutPage.jsx - COMPLETELY FIXED VERSION
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import axios from 'axios';
 import { URL } from '../url';
 
-// Import the SDK components and constants
+// Import the SDK components
 import { 
   ThemeProvider, 
   CoinleyProvider, 
   CoinleyCheckout,
-  NETWORK_TYPES,
-  WALLET_TYPES,
-  TOKEN_CONFIG
+  NETWORK_TYPES
 } from 'coinley-checkout';
 
 function CheckoutPage() {
     const navigate = useNavigate();
     const { cartItems, subtotal, clearCart } = useCart();
     const coinleyCheckoutRef = useRef(null);
-    
-    // Define networks
-    const NETWORKS = {
-        ETHEREUM: 'ethereum',
-        BSC: 'bsc',
-        TRON: 'tron',
-        ALGORAND: 'algorand'
-    };
-
-    // Network to currency mapping
-    const networkCurrencyMap = {
-        'ethereum': ['USDT', 'USDC', 'ETH'],
-        'bsc': ['USDT', 'USDC', 'BNB'],
-        'tron': ['USDT', 'USDC', 'TRX'],
-        'algorand': ['USDT', 'USDC', 'ALGO']
-    };
     
     // Customer information state
     const [customerInfo, setCustomerInfo] = useState({
@@ -1607,66 +1592,27 @@ function CheckoutPage() {
     const [currentOrderId, setCurrentOrderId] = useState(null);
     const [paymentStatus, setPaymentStatus] = useState('pending');
     
-    // Currency and network selection
+    // Select currency options
     const [selectedCurrency, setSelectedCurrency] = useState('USDT');
     const [selectedNetwork, setSelectedNetwork] = useState('ethereum');
     
-    // Wallet address configuration
-    const [walletAddresses, setWalletAddresses] = useState({});
-    const [loadingWallets, setLoadingWallets] = useState(false);
-    
-    // Available currencies
+    // Available currencies and networks
     const availableCurrencies = ['USDT', 'USDC', 'ETH', 'BNB', 'TRX', 'ALGO'];
+    const availableNetworks = ['ethereum', 'bsc', 'tron', 'algorand'];
+    
+    // Network to currency mapping
+    const networkCurrencyMap = {
+        'ethereum': ['USDT', 'USDC', 'ETH'],
+        'bsc': ['USDT', 'USDC', 'BNB'],
+        'tron': ['USDT', 'USDC', 'TRX'],
+        'algorand': ['USDT', 'USDC', 'ALGO']
+    };
     
     // Calculate order totals
-    const shippingCost = subtotal > 50 ? 0 : 0.001;
-    const taxRate = 0.001;
+    const shippingCost = subtotal > 50 ? 0 : 5.99;
+    const taxRate = 0.08;
     const tax = subtotal * taxRate;
     const total = subtotal + shippingCost + tax;
-    
-    // Load merchant wallet addresses on component mount
-    useEffect(() => {
-        if (paymentMethod === 'coinley') {
-            loadMerchantWallets();
-        }
-    }, [paymentMethod]);
-    
-    // Load merchant wallet addresses from your backend or set them directly
-    const loadMerchantWallets = async () => {
-        try {
-            setLoadingWallets(true);
-            
-            // Option 1: Load from your merchant API (if you have merchant authentication)
-            // const response = await axios.get(`${URL}/api/merchants/wallets`, {
-            //     headers: { Authorization: `Bearer ${yourMerchantToken}` }
-            // });
-            // setWalletAddresses(response.data.merchantWallets);
-            
-            // Option 2: Set them directly (for now, while testing)
-            const merchantWallets = {
-                ethereum: '0x581c333Ca62d04bADb563750535C935516b90839',
-                bsc: '0x581c333Ca62d04bADb563750535C935516b90839',
-                tron: 'TV3d7eKYnaV4NVbwrqEPoyib9yXbZUYEBJ',
-                algorand: 'LVUECLJSQODSDJNYRXVKLHKMN7XA2M3PGPKYNACDRGSKCQISFN6IXTVPOA'
-            };
-            setWalletAddresses(merchantWallets);
-            
-            // Option 3: Load from environment variables
-            // const merchantWallets = {
-            //     ethereum: process.env.REACT_APP_ETH_WALLET,
-            //     bsc: process.env.REACT_APP_BSC_WALLET,
-            //     tron: process.env.REACT_APP_TRON_WALLET,
-            //     algorand: process.env.REACT_APP_ALGO_WALLET
-            // };
-            // setWalletAddresses(merchantWallets);
-            
-        } catch (error) {
-            console.error('Error loading merchant wallets:', error);
-            setError('Failed to load payment configuration. Please try again.');
-        } finally {
-            setLoadingWallets(false);
-        }
-    };
     
     // Update network when currency changes
     const updateNetworkForCurrency = (currency) => {
@@ -1697,23 +1643,6 @@ function CheckoutPage() {
         }));
     };
     
-    // Validate wallet address for selected network
-    const validateWalletAddress = (address, network) => {
-        if (!address) return false;
-        
-        switch (network) {
-            case 'ethereum':
-            case 'bsc':
-                return /^0x[a-fA-F0-9]{40}$/.test(address);
-            case 'tron':
-                return /^T[a-zA-Z0-9]{33}$/.test(address);
-            case 'algorand':
-                return /^[A-Z2-7]{58}$/.test(address);
-            default:
-                return address.length > 10; // Basic validation
-        }
-    };
-    
     // Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -1735,18 +1664,6 @@ function CheckoutPage() {
                 throw new Error('Please enter a valid email address');
             }
             
-            // Validate wallet address for crypto payments
-            if (paymentMethod === 'coinley') {
-                const recipientAddress = walletAddresses[selectedNetwork];
-                if (!recipientAddress) {
-                    throw new Error(`No wallet address configured for ${selectedNetwork}. Please contact support.`);
-                }
-                
-                if (!validateWalletAddress(recipientAddress, selectedNetwork)) {
-                    throw new Error(`Invalid wallet address format for ${selectedNetwork}. Please contact support.`);
-                }
-            }
-            
             // Create order object
             const order = {
                 items: cartItems,
@@ -1760,19 +1677,18 @@ function CheckoutPage() {
                 paymentMethod,
                 paymentDetails: {
                     currency: selectedCurrency,
-                    network: selectedNetwork,
-                    recipientAddress: walletAddresses[selectedNetwork]
+                    network: selectedNetwork
                 }
             };
             
-            // Create order in your backend
+            // Create order in your system
             const orderResponse = await axios.post(`${URL}/api/orders`, order);
             const orderId = orderResponse.data.id;
             
             setCurrentOrderId(orderId);
             localStorage.setItem('currentOrderId', orderId);
             
-            // Initiate payment if crypto payment method is selected
+            // Initiate crypto payment
             if (paymentMethod === 'coinley' && coinleyCheckoutRef.current) {
                 initiatePayment(orderId);
             } else {
@@ -1788,61 +1704,25 @@ function CheckoutPage() {
     // Initialize payment with Coinley
     const initiatePayment = (orderId) => {
         if (coinleyCheckoutRef.current) {
-            const recipientAddress = walletAddresses[selectedNetwork];
+            console.log('Initiating payment with Coinley...');
             
-            console.log('Initiating payment with:', {
-                network: selectedNetwork,
-                currency: selectedCurrency,
-                amount: total,
-                recipientAddress,
-                allWalletAddresses: walletAddresses
-            });
-            
-            // Validate recipient address
-            if (!recipientAddress) {
-                setError(`No wallet address configured for ${selectedNetwork}. Please contact support.`);
-                setProcessing(false);
-                return;
-            }
-            
-            if (!validateWalletAddress(recipientAddress, selectedNetwork)) {
-                setError(`Invalid wallet address format for ${selectedNetwork}. Please contact support.`);
-                setProcessing(false);
-                return;
-            }
-            
-            // Create payment configuration object
             const paymentConfig = {
                 amount: total,
                 currency: selectedCurrency,
                 network: selectedNetwork,
                 customerEmail: customerInfo.email,
                 callbackUrl: `${window.location.origin}/api/webhooks/payments/coinley`,
-                
-                // Multiple ways to pass the recipient address to ensure compatibility
-                recipientAddress: recipientAddress,
-                toAddress: recipientAddress,
-                walletAddress: recipientAddress,
-                
-                // Pass all wallet addresses for network switching
-                merchantWalletAddresses: walletAddresses,
-                
-                // Additional configuration
-                debug: true,
-                testMode: false,
                 metadata: {
                     orderId: orderId,
                     customerName: `${customerInfo.firstName} ${customerInfo.lastName}`,
-                    recipientAddress: recipientAddress,
-                    network: selectedNetwork,
-                    walletAddresses: walletAddresses
+                    selectedNetwork: selectedNetwork,
+                    selectedCurrency: selectedCurrency
                 }
             };
             
             console.log('Payment configuration:', paymentConfig);
             
             try {
-                // Open the payment modal
                 coinleyCheckoutRef.current.open(paymentConfig);
             } catch (error) {
                 console.error("Error opening Coinley checkout:", error);
@@ -1877,7 +1757,6 @@ function CheckoutPage() {
                     network: paymentDetails?.network || selectedNetwork,
                     currency: paymentDetails?.currency || selectedCurrency,
                     amount: paymentDetails?.amount || total,
-                    recipientAddress: walletAddresses[selectedNetwork],
                     timestamp: new Date().toISOString()
                 }
             });
@@ -1894,8 +1773,7 @@ function CheckoutPage() {
                         transactionId: transactionHash,
                         paymentId,
                         network: paymentDetails?.network || selectedNetwork,
-                        currency: paymentDetails?.currency || selectedCurrency,
-                        recipientAddress: walletAddresses[selectedNetwork]
+                        currency: paymentDetails?.currency || selectedCurrency
                     }
                 }
             });
@@ -1912,23 +1790,15 @@ function CheckoutPage() {
         console.error('Payment error:', error);
         setPaymentStatus('failed');
         
-        // Log debugging information
-        console.log('Payment error debugging info:', {
-            selectedNetwork,
-            selectedCurrency,
-            walletAddresses,
-            recipientAddress: walletAddresses[selectedNetwork],
-            errorMessage: error.message
-        });
+        const errorMessage = error.message || 'Unknown error';
+        console.log('Error details:', error);
         
-        if (error.message && error.message.includes('User rejected')) {
+        if (errorMessage.includes('User rejected')) {
             setError('Payment was rejected. You can try again when ready.');
-        } else if (error.message && error.message.includes('insufficient funds')) {
+        } else if (errorMessage.includes('insufficient funds')) {
             setError('Payment failed: Insufficient funds in your wallet. Please add funds and try again.');
-        } else if (error.message && error.message.includes('Recipient address not provided')) {
-            setError(`Payment failed: No recipient address configured for ${selectedNetwork}. Please contact support.`);
         } else {
-            setError(`Payment failed: ${error.message || 'Unknown error occurred'}`);
+            setError(`Payment failed: ${errorMessage}`);
         }
         
         setProcessing(false);
@@ -1938,11 +1808,6 @@ function CheckoutPage() {
     const handleCloseModal = () => {
         console.log('Payment modal closed');
         setProcessing(false);
-    };
-    
-    // Get the current recipient address
-    const getCurrentRecipientAddress = () => {
-        return walletAddresses[selectedNetwork] || 'Not configured';
     };
     
     return (
@@ -2124,100 +1989,59 @@ function CheckoutPage() {
 
                                 {paymentMethod === 'coinley' && (
                                     <div className="ml-7 mt-2 bg-blue-50 p-4 rounded-md">
-                                        {loadingWallets ? (
-                                            <div className="text-center py-2">
-                                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-                                                <p className="text-sm text-blue-600 mt-2">Loading payment configuration...</p>
+                                        <div className="mb-3">
+                                            <label className="block text-sm font-medium text-blue-700 mb-1">
+                                                Select Currency
+                                            </label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {availableCurrencies.map(currency => (
+                                                    <button
+                                                        key={currency}
+                                                        type="button"
+                                                        onClick={() => handleCurrencyChange(currency)}
+                                                        className={`px-3 py-1 rounded-md text-sm ${
+                                                            selectedCurrency === currency 
+                                                                ? 'bg-blue-600 text-white' 
+                                                                : 'bg-white text-blue-600 border border-blue-300'
+                                                        }`}
+                                                    >
+                                                        {currency}
+                                                    </button>
+                                                ))}
                                             </div>
-                                        ) : (
-                                            <>
-                                                <div className="mb-3">
-                                                    <label className="block text-sm font-medium text-blue-700 mb-1">
-                                                        Select Currency
-                                                    </label>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {availableCurrencies.map(currency => (
-                                                            <button
-                                                                key={currency}
-                                                                type="button"
-                                                                onClick={() => handleCurrencyChange(currency)}
-                                                                className={`px-3 py-1 rounded-md text-sm ${
-                                                                    selectedCurrency === currency 
-                                                                        ? 'bg-blue-600 text-white' 
-                                                                        : 'bg-white text-blue-600 border border-blue-300'
-                                                                }`}
-                                                            >
-                                                                {currency}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="mb-3">
-                                                    <label className="block text-sm font-medium text-blue-700 mb-1">
-                                                        Preferred Network
-                                                    </label>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {Object.keys(NETWORKS).map(networkKey => {
-                                                            const network = NETWORKS[networkKey].toLowerCase();
-                                                            // Only show networks that support the selected currency
-                                                            if (!networkCurrencyMap[network]?.includes(selectedCurrency)) {
-                                                                return null;
-                                                            }
-                                                            return (
-                                                                <button
-                                                                    key={network}
-                                                                    type="button"
-                                                                    onClick={() => setSelectedNetwork(network)}
-                                                                    className={`px-3 py-1 rounded-md text-sm ${
-                                                                        selectedNetwork === network 
-                                                                            ? 'bg-blue-600 text-white' 
-                                                                            : 'bg-white text-blue-600 border border-blue-300'
-                                                                    }`}
-                                                                >
-                                                                    {networkKey}
-                                                                </button>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </div>
-                                                
-                                                {/* Payment Configuration Display */}
-                                                <div className="mt-4 p-3 bg-white rounded border">
-                                                    <h4 className="text-sm font-medium text-gray-700 mb-2">Payment Configuration</h4>
-                                                    <div className="space-y-1 text-xs">
-                                                        <div className="flex justify-between">
-                                                            <span className="text-gray-500">Network:</span>
-                                                            <span className="font-medium">{selectedNetwork.toUpperCase()}</span>
-                                                        </div>
-                                                        <div className="flex justify-between">
-                                                            <span className="text-gray-500">Currency:</span>
-                                                            <span className="font-medium">{selectedCurrency}</span>
-                                                        </div>
-                                                        <div className="flex justify-between">
-                                                            <span className="text-gray-500">Recipient:</span>
-                                                            <span className="font-mono text-xs break-all">
-                                                                {getCurrentRecipientAddress()}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex justify-between">
-                                                            <span className="text-gray-500">Status:</span>
-                                                            <span className={`font-medium ${
-                                                                walletAddresses[selectedNetwork] 
-                                                                    ? 'text-green-600' 
-                                                                    : 'text-red-600'
-                                                            }`}>
-                                                                {walletAddresses[selectedNetwork] ? 'Ready' : 'Not Configured'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                
-                                                <p className="text-sm text-blue-700 mt-2">
-                                                    You'll be able to pay using MetaMask, TronLink, Trust Wallet, or Lute Wallet depending on your selected network.
-                                                </p>
-                                            </>
-                                        )}
+                                        </div>
+                                        
+                                        <div className="mb-3">
+                                            <label className="block text-sm font-medium text-blue-700 mb-1">
+                                                Preferred Network
+                                            </label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {availableNetworks.map(network => {
+                                                    // Only show networks that support the selected currency
+                                                    if (!networkCurrencyMap[network]?.includes(selectedCurrency)) {
+                                                        return null;
+                                                    }
+                                                    return (
+                                                        <button
+                                                            key={network}
+                                                            type="button"
+                                                            onClick={() => setSelectedNetwork(network)}
+                                                            className={`px-3 py-1 rounded-md text-sm capitalize ${
+                                                                selectedNetwork === network 
+                                                                    ? 'bg-blue-600 text-white' 
+                                                                    : 'bg-white text-blue-600 border border-blue-300'
+                                                            }`}
+                                                        >
+                                                            {network}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                        
+                                        <p className="text-sm text-blue-700 mt-2">
+                                            You'll be able to pay using MetaMask, TronLink, Trust Wallet, or Lute Wallet depending on your selected network.
+                                        </p>
                                     </div>
                                 )}
                             </div>
@@ -2239,8 +2063,8 @@ function CheckoutPage() {
 
                             <button
                                 type="submit"
-                                className="w-full py-2 px-4 bg-[#7042D2] hover:bg-[#8152E2] text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7042D2] disabled:opacity-50 disabled:cursor-not-allowed"
-                                disabled={processing || paymentStatus === 'success' || (paymentMethod === 'coinley' && !walletAddresses[selectedNetwork])}
+                                className="w-full py-2 px-4 bg-[#7042D2] hover:bg-[#8152E2] text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7042D2]"
+                                disabled={processing || paymentStatus === 'success'}
                             >
                                 {processing ? (
                                     <span className="flex items-center justify-center">
@@ -2250,18 +2074,10 @@ function CheckoutPage() {
                                         </svg>
                                         Processing...
                                     </span>
-                                ) : paymentMethod === 'coinley' && !walletAddresses[selectedNetwork] ? (
-                                    'Payment Configuration Required'
                                 ) : (
                                     'Place Order'
                                 )}
                             </button>
-                            
-                            {paymentMethod === 'coinley' && !walletAddresses[selectedNetwork] && (
-                                <p className="text-sm text-red-600 mt-2 text-center">
-                                    No wallet address configured for {selectedNetwork}. Please contact support.
-                                </p>
-                            )}
                         </div>
                     </form>
                 </div>
@@ -2311,13 +2127,13 @@ function CheckoutPage() {
                                 <p className="text-sm font-medium text-gray-900">
                                     {shippingCost === 0
                                         ? <span className="text-green-600">Free</span>
-                                        : `${shippingCost.toFixed(2)}`
+                                        : `$${shippingCost.toFixed(2)}`
                                     }
                                 </p>
                             </div>
 
                             <div className="flex justify-between">
-                                <p className="text-sm text-gray-600">Tax (0.1%)</p>
+                                <p className="text-sm text-gray-600">Tax (8%)</p>
                                 <p className="text-sm font-medium text-gray-900">${tax.toFixed(2)}</p>
                             </div>
 
@@ -2325,13 +2141,10 @@ function CheckoutPage() {
                                 <p className="text-base font-medium text-gray-900">Total</p>
                                 <div className="text-right">
                                     <p className="text-base font-bold text-blue-600">${total.toFixed(2)}</p>
-                                    {selectedCurrency && selectedCurrency !== 'USD' && walletAddresses[selectedNetwork] && (
-                                        <div className="text-xs text-gray-500 mt-1">
-                                            <p>Pay with: {selectedCurrency} on {selectedNetwork}</p>
-                                            <p className="font-mono break-all">
-                                                To: {walletAddresses[selectedNetwork].slice(0, 10)}...
-                                            </p>
-                                        </div>
+                                    {selectedCurrency && selectedCurrency !== 'USD' && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Pay with: {selectedCurrency} on {selectedNetwork}
+                                        </p>
                                     )}
                                 </div>
                             </div>
@@ -2340,7 +2153,7 @@ function CheckoutPage() {
                 </div>
             </div>
 
-            {/* Coinley Checkout Component */}
+            {/* Coinley Payment Gateway */}
             <ThemeProvider initialTheme="light">
                 <CoinleyProvider
                     apiKey="afb78ff958350b9067798dd077c28459"
@@ -2358,10 +2171,11 @@ function CheckoutPage() {
                         theme="light"
                         autoOpen={false}
                         testMode={false}
-                        supportedNetworks={Object.values(NETWORKS)}
+                        supportedNetworks={availableNetworks}
                         supportedCurrencies={availableCurrencies}
                         defaultCurrency={selectedCurrency}
                         defaultNetwork={selectedNetwork}
+                        debug={true}
                     />
                 </CoinleyProvider>
             </ThemeProvider>
