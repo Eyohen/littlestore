@@ -633,7 +633,7 @@
 
 
 
-// CheckoutPage.jsx - COMPLETELY FIXED VERSION
+// CheckoutPage.jsx 
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
@@ -691,9 +691,7 @@ function CheckoutPage() {
     
     // Calculate order totals
     const shippingCost = subtotal > 50 ? 0 : 0.1;
-    const taxRate = 0.08;
-    const tax = subtotal * taxRate;
-    const total = subtotal + shippingCost + tax;
+    const total = subtotal + shippingCost;
     
     // Update network when currency changes
     const updateNetworkForCurrency = (currency) => {
@@ -1213,20 +1211,13 @@ function CheckoutPage() {
                                 </p>
                             </div>
 
-                            <div className="flex justify-between">
-                                <p className="text-sm text-gray-600">Tax (8%)</p>
-                                <p className="text-sm font-medium text-gray-900">${tax.toFixed(2)}</p>
-                            </div>
+                 
 
                             <div className="flex justify-between border-t pt-3">
                                 <p className="text-base font-medium text-gray-900">Total</p>
                                 <div className="text-right">
                                     <p className="text-base font-bold text-blue-600">${total.toFixed(2)}</p>
-                                    {selectedCurrency && selectedCurrency !== 'USD' && (
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            Pay with: {selectedCurrency} on {selectedNetwork}
-                                        </p>
-                                    )}
+                  
                                 </div>
                             </div>
                         </div>
