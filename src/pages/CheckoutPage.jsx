@@ -645,7 +645,7 @@ import {
   ThemeProvider, 
   CoinleyProvider, 
   CoinleyCheckout,
-  NETWORK_TYPES
+
 } from 'coinley-checkout';
 
 function CheckoutPage() {
@@ -750,7 +750,6 @@ function CheckoutPage() {
                 totals: {
                     subtotal,
                     shipping: shippingCost,
-                    tax,
                     total
                 },
                 paymentMethod,
