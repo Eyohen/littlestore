@@ -633,6 +633,15 @@
 
 
 
+
+
+
+
+
+
+
+
+
 // CheckoutPage.jsx 
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -645,7 +654,6 @@ import {
   ThemeProvider, 
   CoinleyProvider, 
   CoinleyCheckout,
-
 } from 'coinley-checkout';
 
 function CheckoutPage() {
@@ -673,45 +681,9 @@ function CheckoutPage() {
     const [currentOrderId, setCurrentOrderId] = useState(null);
     const [paymentStatus, setPaymentStatus] = useState('pending');
     
-    // Select currency options
-    const [selectedCurrency, setSelectedCurrency] = useState('USDT');
-    const [selectedNetwork, setSelectedNetwork] = useState('ethereum');
-    
-    // Available currencies and networks
-    const availableCurrencies = ['USDT', 'USDC', 'ETH', 'BNB', 'TRX', 'ALGO'];
-    const availableNetworks = ['ethereum', 'bsc', 'tron', 'algorand'];
-    
-    // Network to currency mapping
-    const networkCurrencyMap = {
-        'ethereum': ['USDT', 'USDC', 'ETH'],
-        'bsc': ['USDT', 'USDC', 'BNB'],
-        'tron': ['USDT', 'USDC', 'TRX'], // Added TRON support for USDT/USDC
-        'algorand': ['USDT', 'USDC', 'ALGO']
-    };
-    
     // Calculate order totals
-    const shippingCost = subtotal > 50 ? 0 : 0.1;
+    const shippingCost = subtotal > 50 ? 0 : 0.01;
     const total = subtotal + shippingCost;
-    
-    // Update network when currency changes
-    const updateNetworkForCurrency = (currency) => {
-        const supportedNetworks = Object.keys(networkCurrencyMap).filter(network => 
-            networkCurrencyMap[network].includes(currency)
-        );
-        
-        if (supportedNetworks.length > 0) {
-            if (supportedNetworks.includes(selectedNetwork)) {
-                return; // Keep current network
-            }
-            setSelectedNetwork(supportedNetworks[0]);
-        }
-    };
-    
-    // Handle currency change
-    const handleCurrencyChange = (currency) => {
-        setSelectedCurrency(currency);
-        updateNetworkForCurrency(currency);
-    };
     
     // Handle input change
     const handleInputChange = (e) => {
@@ -752,11 +724,7 @@ function CheckoutPage() {
                     shipping: shippingCost,
                     total
                 },
-                paymentMethod,
-                paymentDetails: {
-                    currency: selectedCurrency,
-                    network: selectedNetwork
-                }
+                paymentMethod
             };
             
             // Create order in your system
@@ -786,15 +754,13 @@ function CheckoutPage() {
             
             const paymentConfig = {
                 amount: total,
-                currency: selectedCurrency,
-                network: selectedNetwork,
+                currency: 'USDT', // Default currency - user can select in the SDK
+                network: 'ethereum', // Default network - user can select in the SDK
                 customerEmail: customerInfo.email,
                 callbackUrl: `${window.location.origin}/api/webhooks/payments/coinley`,
                 metadata: {
                     orderId: orderId,
-                    customerName: `${customerInfo.firstName} ${customerInfo.lastName}`,
-                    selectedNetwork: selectedNetwork,
-                    selectedCurrency: selectedCurrency
+                    customerName: `${customerInfo.firstName} ${customerInfo.lastName}`
                 }
             };
             
@@ -832,8 +798,8 @@ function CheckoutPage() {
                     paymentId,
                     status: 'success',
                     transactionId: transactionHash,
-                    network: paymentDetails?.network || selectedNetwork,
-                    currency: paymentDetails?.currency || selectedCurrency,
+                    network: paymentDetails?.network,
+                    currency: paymentDetails?.currency,
                     amount: paymentDetails?.amount || total,
                     timestamp: new Date().toISOString()
                 }
@@ -850,8 +816,8 @@ function CheckoutPage() {
                     paymentDetails: {
                         transactionId: transactionHash,
                         paymentId,
-                        network: paymentDetails?.network || selectedNetwork,
-                        currency: paymentDetails?.currency || selectedCurrency
+                        network: paymentDetails?.network,
+                        currency: paymentDetails?.currency
                     }
                 }
             });
@@ -1048,7 +1014,7 @@ function CheckoutPage() {
 
                         {/* Payment Method */}
                         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                            <h2 className="text-xl font-semibold mb-4">Payment Method</h2>
+                            {/* <h2 className="text-xl font-semibold mb-4">Payment Method</h2> */}
 
                             <div className="space-y-4">
                                 <div className="flex items-center">
@@ -1065,63 +1031,7 @@ function CheckoutPage() {
                                     </label>
                                 </div>
 
-                                {paymentMethod === 'coinley' && (
-                                    <div className="ml-7 mt-2 bg-blue-50 p-4 rounded-md">
-                                        <div className="mb-3">
-                                            <label className="block text-sm font-medium text-blue-700 mb-1">
-                                                Select Currency
-                                            </label>
-                                            <div className="flex flex-wrap gap-2">
-                                                {availableCurrencies.map(currency => (
-                                                    <button
-                                                        key={currency}
-                                                        type="button"
-                                                        onClick={() => handleCurrencyChange(currency)}
-                                                        className={`px-3 py-1 rounded-md text-sm ${
-                                                            selectedCurrency === currency 
-                                                                ? 'bg-blue-600 text-white' 
-                                                                : 'bg-white text-blue-600 border border-blue-300'
-                                                        }`}
-                                                    >
-                                                        {currency}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="mb-3">
-                                            <label className="block text-sm font-medium text-blue-700 mb-1">
-                                                Preferred Network
-                                            </label>
-                                            <div className="flex flex-wrap gap-2">
-                                                {availableNetworks.map(network => {
-                                                    // Only show networks that support the selected currency
-                                                    if (!networkCurrencyMap[network]?.includes(selectedCurrency)) {
-                                                        return null;
-                                                    }
-                                                    return (
-                                                        <button
-                                                            key={network}
-                                                            type="button"
-                                                            onClick={() => setSelectedNetwork(network)}
-                                                            className={`px-3 py-1 rounded-md text-sm capitalize ${
-                                                                selectedNetwork === network 
-                                                                    ? 'bg-blue-600 text-white' 
-                                                                    : 'bg-white text-blue-600 border border-blue-300'
-                                                            }`}
-                                                        >
-                                                            {network}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                        
-                                        <p className="text-sm text-blue-700 mt-2">
-                                            You'll be able to pay using MetaMask, TronLink, Trust Wallet, or Lute Wallet depending on your selected network.
-                                        </p>
-                                    </div>
-                                )}
+                            
                             </div>
                         </div>
 
@@ -1210,13 +1120,10 @@ function CheckoutPage() {
                                 </p>
                             </div>
 
-                 
-
                             <div className="flex justify-between border-t pt-3">
                                 <p className="text-base font-medium text-gray-900">Total</p>
                                 <div className="text-right">
                                     <p className="text-base font-bold text-blue-600">${total.toFixed(2)}</p>
-                  
                                 </div>
                             </div>
                         </div>
@@ -1242,10 +1149,6 @@ function CheckoutPage() {
                         theme="light"
                         autoOpen={false}
                         testMode={false}
-                        supportedNetworks={availableNetworks}
-                        supportedCurrencies={availableCurrencies}
-                        defaultCurrency={selectedCurrency}
-                        defaultNetwork={selectedNetwork}
                         debug={true}
                     />
                 </CoinleyProvider>
@@ -1255,4 +1158,3 @@ function CheckoutPage() {
 }
 
 export default CheckoutPage;
-
