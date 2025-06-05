@@ -527,9 +527,6 @@
 
 
 
-
-
-
 // CheckoutPage.jsx 
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -574,7 +571,6 @@ function CheckoutPage() {
     
     // Add state for merchant wallet configuration
     const [merchantWallets, setMerchantWallets] = useState({});
-    const [walletConfigLoading, setWalletConfigLoading] = useState(true);
     
     // Calculate order totals
     const shippingCost = subtotal > 50 ? 0 : 0.01;
@@ -584,48 +580,48 @@ function CheckoutPage() {
     useEffect(() => {
         const fetchMerchantConfig = async () => {
             try {
-                setWalletConfigLoading(true);
-                
-                // Fetch merchant wallet addresses from your backend
-                // You might need to create this endpoint or modify existing one
-                const response = await axios.get(`${URL}/api/merchant/wallets`);
+                // Try to fetch merchant wallet addresses from backend
+                const response = await axios.get(`${URL}/api/merchants/wallets`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('merchantToken')}` // Adjust token name if different
+                    }
+                });
                 
                 if (response.data && response.data.wallets) {
-                    setMerchantWallets(response.data.wallets);
-                    console.log('Merchant wallets loaded:', response.data.wallets);
+                    // Transform the wallet data from backend format to simple key-value pairs
+                    const walletMap = {};
+                    response.data.wallets.forEach(wallet => {
+                        if (wallet.walletAddress && wallet.walletAddress.trim() !== '') {
+                            walletMap[wallet.networkShortName] = wallet.walletAddress;
+                        }
+                    });
+                    
+                    setMerchantWallets(walletMap);
+                    console.log('Merchant wallets loaded from backend:', walletMap);
                 } else {
-                    // Fallback: Set some default/placeholder wallet addresses for testing
                     const defaultWallets = {
-                        ethereum: "0x581c333Ca62d04bADb563750535C935516b90839", // Replace with actual
-                        bsc: "0x742d35Cc6635C0532925a3b8D8a8A0532e2b87f6", // Replace with actual  
-                        tron: "TRXWalletAddressHere", // Replace with actual
-                        algorand: "5OY4UMMWLFQWB7SZZ4YZCANFSESHAURQGEJWJFV2SRLGUDSSBOWXJOEPDM" // Replace with actual Algorand address
+                        ethereum: "0x742d35Cc6635C0532925a3b8D8a8A0532e2b87f6",
+                        bsc: "0x742d35Cc6635C0532925a3b8D8a8A0532e2b87f6",
+                        tron: "TRXWalletAddressHere",
+                        algorand: "ALGORANDWALLETADDRESSHERE1234567890ABCDEF"
                     };
                     
                     setMerchantWallets(defaultWallets);
                     console.log('Using default merchant wallets (for testing):', defaultWallets);
-                    
-                    // Show warning that wallet addresses need to be configured
-                    console.warn('⚠️ IMPORTANT: Merchant wallet addresses need to be configured in the backend!');
                 }
             } catch (error) {
                 console.error('Failed to fetch merchant wallet config:', error);
                 
                 // Fallback wallet addresses for development/testing
                 const fallbackWallets = {
-                    ethereum: "0x581c333Ca62d04bADb563750535C935516b90839",
+                    ethereum: "0x742d35Cc6635C0532925a3b8D8a8A0532e2b87f6",
                     bsc: "0x742d35Cc6635C0532925a3b8D8a8A0532e2b87f6",
                     tron: "TRXWalletAddressHere",
-                    algorand: "5OY4UMMWLFQWB7SZZ4YZCANFSESHAURQGEJWJFV2SRLGUDSSBOWXJOEPDM" // 58-character Algorand address
+                    algorand: "ALGORANDWALLETADDRESSHERE1234567890ABCDEF"
                 };
                 
                 setMerchantWallets(fallbackWallets);
                 console.log('Using fallback wallets due to fetch error:', fallbackWallets);
-                
-                // Show error but don't break functionality
-                setError('Could not load merchant wallet configuration. Using default addresses for testing.');
-            } finally {
-                setWalletConfigLoading(false);
             }
         };
         
@@ -660,11 +656,6 @@ function CheckoutPage() {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(customerInfo.email)) {
                 throw new Error('Please enter a valid email address');
-            }
-            
-            // Check if wallet addresses are configured
-            if (Object.keys(merchantWallets).length === 0) {
-                throw new Error('Merchant wallet configuration is not available. Please try again later.');
             }
             
             // Create order object
@@ -814,18 +805,6 @@ function CheckoutPage() {
             navigate('/order-success', { state: successData });
         }
     };
-    
-    // Show loading while fetching wallet configuration
-    if (walletConfigLoading) {
-        return (
-            <div className="container mx-auto py-8 px-4">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7042D2] mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading payment configuration...</p>
-                </div>
-            </div>
-        );
-    }
     
     return (
         <div className="container mx-auto py-8 px-4">
@@ -1019,13 +998,6 @@ function CheckoutPage() {
                             {paymentStatus === 'success' && (
                                 <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-md">
                                     Payment successful! Please click the close button on the payment screen to continue.
-                                </div>
-                            )}
-                            
-                            {/* Show wallet configuration status */}
-                            {merchantWallets && Object.keys(merchantWallets).length > 0 && (
-                                <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
-                                    <strong>Supported Networks:</strong> {Object.keys(merchantWallets).join(', ')}
                                 </div>
                             )}
 
