@@ -540,6 +540,7 @@ import {
   CoinleyProvider, 
   CoinleyCheckout,
 } from 'coinley-checkout';
+import 'coinley-checkout/dist/style.css'
 
 function CheckoutPage() {
     const navigate = useNavigate();

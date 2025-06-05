@@ -15,6 +15,7 @@ import TestCoinley from './pages/TestCoinley';
 import QuickDemo from './QuickDemo';
 import TestQRCode from './pages/TestQRCode';
 import StandaloneTest from './pages/StandaloneTest';
+import 'coinley-checkout/dist/style.css'
 
 
 
