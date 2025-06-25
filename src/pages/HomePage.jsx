@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import axios from 'axios';
 import { URL } from '../url';

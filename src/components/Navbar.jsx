@@ -33,17 +33,17 @@ function Navbar() {
             <Link to="/products" className="text-gray-700 hover:text-primary font-medium">
               Products
             </Link>
-            <Link to="/login" className="text-white hover:text-primary font-medium bg-[#7042D2] px-9 rounded-lg">
+            {/* <Link to="/login" className="text-white hover:text-primary font-medium bg-[#7042D2] px-9 rounded-lg">
               Login
-            </Link>
+            </Link> */}
           </div>
 
           {/* Cart Icon */}
           <div className="flex items-center space-x-4">
-          <Link to="/" className="relative">
+          {/* <Link to="/" className="relative">
                <GoPerson size={25}/>
             
-            </Link>
+            </Link> */}
             <Link to="/cart" className="relative">
             <FiShoppingCart size={25}/>
               {cartItemCount > 0 && (

@@ -188,7 +188,7 @@
 
 
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import axios from 'axios';
 import { URL } from '../url';
@@ -201,6 +201,7 @@ function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const { addToCart } = useCart();
+  const navigate = useNavigate()
 
   const fetchProduct = async () => {
     try {
@@ -250,7 +251,7 @@ function ProductDetailPage() {
     // Auto-hide modal after 3 seconds
     setTimeout(() => {
       setShowModal(false);
-    }, 3000);
+    }, 93000);
   };
 
   const closeModal = () => {
@@ -373,55 +374,59 @@ function ProductDetailPage() {
       </div>
 
       {/* Success Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md mx-4 transform transition-all duration-300 ease-out">
-            <div className="text-center">
-              {/* Success Icon */}
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              
-              {/* Success Message */}
-              <h3 className="text-xl font-bold text-gray-900 mb-2 font-bricolage">
-                Added to Cart!
-              </h3>
-              
-              {/* Product Info */}
-              <div className="flex items-center justify-center gap-3 mb-6 p-3 bg-gray-50 rounded-lg">
-                <img 
-                  src={product.imageUrl} 
-                  alt={product.name}
-                  className="w-12 h-12 object-cover rounded-lg"
-                />
-                <div className="text-left">
-                  <p className="font-medium text-gray-900 text-sm">{product.name}</p>
-                  <p className="text-gray-500 text-sm">Quantity: {quantity}</p>
-                </div>
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="flex gap-3">
-                <button
-                  onClick={closeModal}
-                  className="flex-1 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-                >
-                  Continue Shopping
-                </button>
-                <Link
-                  to="/cart"
-                  className="flex-1 px-4 py-2 bg-[#7042D2] text-white rounded-lg hover:bg-[#5c35b8] transition-colors font-medium text-center"
-                  onClick={closeModal}
-                >
-                  View Cart
-                </Link>
-              </div>
-            </div>
+   {showModal && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md mx-4 transform transition-all duration-300 ease-out">
+      <div className="text-center">
+        {/* Success Icon */}
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        
+        {/* Success Message */}
+        <h3 className="text-xl font-bold text-gray-900 mb-2 font-bricolage">
+          Added to Cart!
+        </h3>
+        
+        {/* Product Info */}
+        <div className="flex items-center justify-center gap-3 mb-6 p-3 bg-gray-50 rounded-lg">
+          <img 
+            src={product.imageUrl} 
+            alt={product.name}
+            className="w-12 h-12 object-cover rounded-lg"
+          />
+          <div className="text-left">
+            <p className="font-medium text-gray-900 text-sm">{product.name}</p>
+            <p className="text-gray-500 text-sm">Quantity: {quantity}</p>
           </div>
         </div>
-      )}
+        
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={closeModal}
+            className="flex px-2 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium items-center justify-center"
+          >
+            Continue Shopping
+          </button>
+          <button
+            onClick={() => {
+              closeModal();
+              setTimeout(() => {
+                navigate("/cart");
+              }, 10);
+            }}
+            className="flex px-4 py-2 bg-[#7042D2] text-white rounded-lg hover:bg-[#5c35b8] transition-colors font-medium text-center items-center justify-center"
+          >
+            View Cart
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }

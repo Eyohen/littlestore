@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 
-function ProductCard({ product }) {
+function ProductCard({ product, }) {
   const { addToCart } = useCart();
 
 console.log("product.price:", product.price)
@@ -17,12 +17,12 @@ console.log("product.price:", product.price)
           />
         </div>
         <div className="p-4">
-          <h3 className="text-lg font-semibold text-[#7042D2]">{product.name}</h3>
+          <h3 className="text-lg font-semibold text-[#7042D2]">{product?.name}</h3>
           <div className="flex justify-between items-center mt-2">
             <span className="text-gray-900 font-bricolage text-xl font-bold">${Number (product?.price)?.toFixed(2)}</span>
             {/* <span className="text-sm text-gray-500">{product.unit}</span> */}
           </div>
-          <p className="text-gray-600 text-sm mt-2 line-clamp-2">{product.description}</p>
+          <p className="text-gray-600 text-sm mt-2 line-clamp-2">{product?.description}</p>
         </div>
       </Link>
       <div className="p-4 pt-0">
