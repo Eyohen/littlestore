@@ -556,7 +556,7 @@ function CheckoutPage() {
             </div>
 
             {/* Coinley Payment Gateway */}
-            <ThemeProvider initialTheme="light">
+            <ThemeProvider initialTheme="dark">
                 <CoinleyProvider
                     apiKey="afb78ff958350b9067798dd077c28459"
                     apiSecret="c22d3879eff18c2d3f8f8a61d4097c230a940356a3d139ffceee11ba65b1a34c"
